@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run typecheck
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build package
+        run: npm run build
+
+      - name: Pack package
+        id: pack
+        run: |
+          TARBALL=$(npm pack --json | node -e "const chunks=[];process.stdin.on('data',d=>chunks.push(d));process.stdin.on('end',()=>{const parsed=JSON.parse(Buffer.concat(chunks).toString('utf8'));process.stdout.write(parsed[0].filename);});")
+          echo "tarball=$TARBALL" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke install packed SDK
+        run: |
+          mkdir -p /tmp/adanos-ts-sdk-smoke
+          cd /tmp/adanos-ts-sdk-smoke
+          npm init -y >/dev/null 2>&1
+          npm install "${GITHUB_WORKSPACE}/${{ steps.pack.outputs.tarball }}"
+          node --input-type=module <<'EOF'
+          import { AdanosClient, StockSentimentClient } from "finance-sentiment";
+
+          if (AdanosClient !== StockSentimentClient) {
+            throw new Error("Compatibility alias mismatch");
+          }
+
+          const client = new AdanosClient({ apiKey: "sk_live_example", baseUrl: "https://api.adanos.org" });
+          if (!client.reddit || !client.news || !client.x || !client.polymarket) {
+            throw new Error("Namespace wiring incomplete");
+          }
+          EOF

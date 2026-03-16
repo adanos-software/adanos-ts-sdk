@@ -1,0 +1,88 @@
+name: Publish to npm
+
+on:
+  release:
+    types:
+      - published
+
+concurrency:
+  group: publish-npm-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+          cache: "npm"
+
+      - name: Resolve package version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          TAG="${{ github.event.release.tag_name }}"
+          if ! printf '%s' "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+'; then
+            echo "Release tag must use SemVer and start with v. Got: $TAG"
+            exit 1
+          fi
+
+          TAG_VERSION="${TAG#v}"
+          if [ "$TAG_VERSION" != "$VERSION" ]; then
+            echo "Release tag version ($TAG_VERSION) does not match package version ($VERSION)."
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run typecheck
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build package
+        run: npm run build
+
+      - name: Pack package
+        id: pack
+        run: |
+          TARBALL=$(npm pack --json | node -e "const chunks=[];process.stdin.on('data',d=>chunks.push(d));process.stdin.on('end',()=>{const parsed=JSON.parse(Buffer.concat(chunks).toString('utf8'));process.stdout.write(parsed[0].filename);});")
+          echo "tarball=$TARBALL" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke install packed SDK
+        run: |
+          mkdir -p /tmp/adanos-ts-sdk-release-smoke
+          cd /tmp/adanos-ts-sdk-release-smoke
+          npm init -y >/dev/null 2>&1
+          npm install "${GITHUB_WORKSPACE}/${{ steps.pack.outputs.tarball }}"
+          node --input-type=module <<'EOF'
+          import { AdanosClient, StockSentimentClient } from "finance-sentiment";
+
+          if (AdanosClient !== StockSentimentClient) {
+            throw new Error("Compatibility alias mismatch");
+          }
+
+          const client = new AdanosClient({ apiKey: "sk_live_example", baseUrl: "https://api.adanos.org" });
+          if (!client.reddit || !client.news || !client.x || !client.polymarket) {
+            throw new Error("Namespace wiring incomplete");
+          }
+          EOF
+
+      - name: Publish package to npm
+        run: npm publish --access public --provenance
