@@ -5,6 +5,17 @@ All notable changes to the Adanos TypeScript SDK will be documented in this file
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+## [1.1.0] - 2026-03-19
+
+### Added
+- Search methods now support `days` and `limit` across Reddit, News, X, Crypto, and Polymarket.
+- Search result types now expose the compact `summary` object returned by the live API.
+
+### Changed
+- Compare response types now match the enriched `/compare` contract, including `trend`, `trend_history`, `sentiment_score`, and platform-specific activity fields.
+- Detail response types now prefer canonical `mentions` and keep `total_mentions` only as a legacy alias where the API still exposes it.
+- `daily_trend` types now expose canonical `sentiment_score` alongside the deprecated `sentiment` alias.
+
 ## [1.0.0] - 2026-03-16
 
 ### Added
