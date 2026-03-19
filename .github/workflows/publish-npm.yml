@@ -4,9 +4,15 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to publish (for example v1.1.0)"
+        required: true
+        type: string
 
 concurrency:
-  group: publish-npm-${{ github.event.release.tag_name }}
+  group: publish-npm-${{ github.event.inputs.ref || github.event.release.tag_name || github.run_id }}
   cancel-in-progress: false
 
 jobs:
@@ -20,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ github.event.inputs.ref || github.event.release.tag_name }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -35,7 +41,7 @@ jobs:
           VERSION=$(node -p "require('./package.json').version")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-          TAG="${{ github.event.release.tag_name }}"
+          TAG="${{ github.event.inputs.ref || github.event.release.tag_name }}"
           if ! printf '%s' "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+'; then
             echo "Release tag must use SemVer and start with v. Got: $TAG"
             exit 1
@@ -58,6 +64,11 @@ jobs:
 
       - name: Build package
         run: npm run build
+
+      - name: Upgrade npm for trusted publishing
+        run: |
+          npm install -g npm@11.5.1
+          npm --version
 
       - name: Pack package
         id: pack
@@ -85,4 +96,8 @@ jobs:
           EOF
 
       - name: Publish package to npm
-        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ""
+        run: |
+          unset NODE_AUTH_TOKEN
+          npm publish --access public --provenance
