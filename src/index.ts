@@ -66,6 +66,7 @@ export interface StockOptions {
 
 /** Alias — compare accepts the same options as a single-stock lookup. */
 export type CompareOptions = StockOptions;
+export type SearchOptions = Pick<TrendingGroupOptions, 'days' | 'limit'>;
 
 export interface NewsSourceOptions {
   /** Optional strict source filter (canonical source id or known alias). */
@@ -101,6 +102,7 @@ export interface StockSentiment {
   found: boolean;
   company_name?: string | null;
   buzz_score?: number | null;
+  mentions?: number | null;
   total_mentions?: number | null;
   sentiment_score?: number | null;
   positive_count?: number | null;
@@ -126,6 +128,7 @@ export interface SubredditCount {
 export interface DailyTrendItem {
   date: string;
   mentions: number;
+  sentiment_score?: number | null;
   sentiment?: number | null;
   buzz_score?: number | null;
 }
@@ -174,10 +177,16 @@ export interface StatsResponse {
   supported_tickers: number;
 }
 
-export interface SearchResponse {
-  query: string;
-  count: number;
-  results: SearchResultItem[];
+export interface StockSearchSummary {
+  mentions: number;
+  buzz_score: number;
+  trend?: 'rising' | 'falling' | 'stable' | null;
+  sentiment_score?: number | null;
+  bullish_pct?: number | null;
+  bearish_pct?: number | null;
+  unique_posts: number;
+  subreddit_count: number;
+  total_upvotes: number;
 }
 
 export interface SearchResultItem {
@@ -188,7 +197,14 @@ export interface SearchResultItem {
   sector?: string | null;
   country?: string | null;
   aliases?: string[] | null;
-  mention_count?: number | null;
+  summary: StockSearchSummary;
+}
+
+export interface SearchResponse<T = SearchResultItem> {
+  query: string;
+  count: number;
+  period_days: number;
+  results: T[];
 }
 
 export interface CompareResponse {
@@ -200,9 +216,17 @@ export interface CompareStockItem {
   ticker: string;
   company_name?: string | null;
   buzz_score: number;
+  trend?: 'rising' | 'falling' | 'stable' | null;
   mentions: number;
+  unique_posts: number;
+  subreddit_count: number;
+  sentiment_score?: number | null;
   sentiment?: number | null;
-  upvotes: number;
+  bullish_pct?: number | null;
+  bearish_pct?: number | null;
+  total_upvotes: number;
+  upvotes?: number | null;
+  trend_history: number[];
 }
 
 interface TrendingGroupBase {
@@ -255,11 +279,33 @@ export interface NewsTopMention {
   created_utc: string;
 }
 
+export interface NewsSearchSummary {
+  mentions: number;
+  buzz_score: number;
+  trend?: 'rising' | 'falling' | 'stable' | null;
+  sentiment_score?: number | null;
+  bullish_pct?: number | null;
+  bearish_pct?: number | null;
+  source_count: number;
+}
+
+export interface NewsSearchResultItem {
+  ticker: string;
+  name: string;
+  type?: string | null;
+  exchange?: string | null;
+  sector?: string | null;
+  country?: string | null;
+  aliases?: string[] | null;
+  summary: NewsSearchSummary;
+}
+
 export interface NewsStockSentiment {
   ticker: string;
   found: boolean;
   company_name?: string | null;
   buzz_score?: number | null;
+  mentions?: number | null;
   total_mentions?: number | null;
   sentiment_score?: number | null;
   positive_count?: number | null;
@@ -299,9 +345,14 @@ export interface NewsCompareStockItem {
   ticker: string;
   company_name?: string | null;
   buzz_score: number;
+  trend?: 'rising' | 'falling' | 'stable' | null;
   mentions: number;
   source_count: number;
+  sentiment_score?: number | null;
   sentiment?: number | null;
+  bullish_pct?: number | null;
+  bearish_pct?: number | null;
+  trend_history: number[];
 }
 
 export interface NewsCompareResponse {
@@ -331,6 +382,7 @@ export interface XStockDetail {
   found: boolean;
   company_name?: string | null;
   buzz_score?: number | null;
+  mentions?: number | null;
   total_mentions?: number | null;
   sentiment_score?: number | null;
   positive_count?: number | null;
@@ -350,10 +402,35 @@ export interface XStockDetail {
 export interface XDailyTrendItem {
   date: string;
   mentions: number;
+  sentiment_score?: number | null;
   sentiment?: number | null;
   avg_rank?: number | null;
   buzz_score?: number | null;
 }
+
+export interface XSearchSummary {
+  mentions: number;
+  buzz_score: number;
+  trend?: 'rising' | 'falling' | 'stable' | null;
+  sentiment_score?: number | null;
+  bullish_pct?: number | null;
+  bearish_pct?: number | null;
+  unique_tweets: number;
+  total_upvotes: number;
+}
+
+export interface XSearchResultItem {
+  ticker: string;
+  name: string;
+  type?: string | null;
+  exchange?: string | null;
+  sector?: string | null;
+  country?: string | null;
+  aliases?: string[] | null;
+  summary: XSearchSummary;
+}
+
+export type XSearchResponse = SearchResponse<XSearchResultItem>;
 
 export interface XTopTweet {
   text_snippet: string;
@@ -407,6 +484,7 @@ export interface PolymarketTrendingStock {
 export interface PolymarketDailyTrendItem {
   date: string;
   trade_count: number;
+  sentiment_score?: number | null;
   sentiment?: number | null;
   buzz_score?: number | null;
 }
@@ -472,16 +550,33 @@ export interface PolymarketCompareStockItem {
   ticker: string;
   company_name?: string | null;
   buzz_score: number;
+  trend?: 'rising' | 'falling' | 'stable' | null;
   trade_count: number;
   market_count: number;
   unique_traders?: number | null;
+  sentiment_score?: number | null;
   sentiment?: number | null;
+  bullish_pct?: number | null;
+  bearish_pct?: number | null;
   total_liquidity: number;
+  trend_history: number[];
 }
 
 export interface PolymarketCompareResponse {
   period_days: number;
   stocks: PolymarketCompareStockItem[];
+}
+
+export interface PolymarketSearchSummary {
+  buzz_score: number;
+  trend?: 'rising' | 'falling' | 'stable' | null;
+  trade_count: number;
+  market_count: number;
+  unique_traders?: number | null;
+  sentiment_score?: number | null;
+  bullish_pct?: number | null;
+  bearish_pct?: number | null;
+  total_liquidity: number;
 }
 
 export interface PolymarketSearchResultItem {
@@ -492,12 +587,13 @@ export interface PolymarketSearchResultItem {
   sector?: string | null;
   country?: string | null;
   aliases: string[];
-  trade_count: number;
+  summary: PolymarketSearchSummary;
 }
 
 export interface PolymarketSearchResponse {
   query: string;
   count: number;
+  period_days: number;
   results: PolymarketSearchResultItem[];
 }
 
@@ -614,8 +710,12 @@ export class RedditNamespace extends PlatformNamespace {
   }
 
   /** Search for stocks by name or ticker. */
-  async search(query: string): Promise<SearchResponse> {
-    return this.request('/search', { q: query });
+  async search(query: string, options: SearchOptions = {}): Promise<SearchResponse> {
+    return this.request('/search', {
+      q: query,
+      days: options.days,
+      limit: options.limit,
+    });
   }
 
   /** Compare multiple stocks side-by-side. */
@@ -677,8 +777,12 @@ export class NewsNamespace extends PlatformNamespace {
   }
 
   /** Search for stocks by name or ticker in news. */
-  async search(query: string): Promise<SearchResponse> {
-    return this.request('/search', { q: query });
+  async search(query: string, options: SearchOptions = {}): Promise<SearchResponse<NewsSearchResultItem>> {
+    return this.request('/search', {
+      q: query,
+      days: options.days,
+      limit: options.limit,
+    });
   }
 
   /** Compare multiple stocks side-by-side using news sentiment. */
@@ -742,8 +846,12 @@ export class XNamespace extends PlatformNamespace {
   }
 
   /** Search for stocks by name or ticker on X/Twitter. */
-  async search(query: string): Promise<SearchResponse> {
-    return this.request('/search', { q: query });
+  async search(query: string, options: SearchOptions = {}): Promise<XSearchResponse> {
+    return this.request('/search', {
+      q: query,
+      days: options.days,
+      limit: options.limit,
+    });
   }
 
   /** Compare multiple stocks side-by-side on X/Twitter. */
@@ -797,8 +905,12 @@ export class PolymarketNamespace extends PlatformNamespace {
   }
 
   /** Search for stocks by name or ticker on Polymarket. */
-  async search(query: string): Promise<PolymarketSearchResponse> {
-    return this.request('/search', { q: query });
+  async search(query: string, options: SearchOptions = {}): Promise<PolymarketSearchResponse> {
+    return this.request('/search', {
+      q: query,
+      days: options.days,
+      limit: options.limit,
+    });
   }
 
   /** Compare multiple stocks side-by-side on Polymarket. */

@@ -70,7 +70,7 @@ const sectors = await client.reddit.trendingSectors({ days: 7, limit: 10 });
 const countries = await client.reddit.trendingCountries({ days: 7, limit: 10 });
 const tsla = await client.reddit.stock("TSLA", { days: 14 });
 const explanation = await client.reddit.explain("TSLA");
-const results = await client.reddit.search("Tesla");
+const results = await client.reddit.search("Tesla", { days: 7, limit: 10 });
 const comparison = await client.reddit.compare(["TSLA", "AAPL", "MSFT"], { days: 7 });
 ```
 
@@ -86,7 +86,7 @@ const sectors = await client.news.trendingSectors({ days: 7, source: "reuters" }
 const countries = await client.news.trendingCountries({ days: 7, source: "reuters" });
 const nvda = await client.news.stock("NVDA", { days: 7 });
 const explanation = await client.news.explain("NVDA");
-const results = await client.news.search("Nvidia");
+const results = await client.news.search("Nvidia", { days: 7, limit: 10 });
 const comparison = await client.news.compare(["NVDA", "AAPL"], { days: 7 });
 const stats = await client.news.stats();
 const health = await client.news.health();
@@ -103,7 +103,7 @@ const trending = await client.x.trending({ days: 1, limit: 20 });
 const sectors = await client.x.trendingSectors({ days: 1, limit: 10 });
 const countries = await client.x.trendingCountries({ days: 1, limit: 10 });
 const nvda = await client.x.stock("NVDA");
-const results = await client.x.search("Nvidia");
+const results = await client.x.search("Nvidia", { days: 7, limit: 10 });
 const comparison = await client.x.compare(["NVDA", "AMD"], { days: 7 });
 ```
 
@@ -118,7 +118,7 @@ const trending = await client.polymarket.trending({ days: 7, limit: 20, type: "s
 const sectors = await client.polymarket.trendingSectors({ days: 7, limit: 10 });
 const countries = await client.polymarket.trendingCountries({ days: 7, limit: 10 });
 const aapl = await client.polymarket.stock("AAPL");
-const results = await client.polymarket.search("Apple");
+const results = await client.polymarket.search("Apple", { days: 7, limit: 10 });
 const comparison = await client.polymarket.compare(["AAPL", "TSLA"], { days: 7 });
 ```
 
@@ -138,7 +138,7 @@ Polymarket semantics:
 | `trendingCountries({ days, limit, offset })` | Trending countries |
 | `stock(ticker, { days })` | Detailed sentiment for a ticker |
 | `explain(ticker)` | AI-generated trend explanation |
-| `search(query)` | Search stocks by name or ticker |
+| `search(query, { days, limit })` | Search stocks by name or ticker with recent-period summaries |
 | `compare(tickers, { days })` | Compare up to 10 stocks |
 | `stats()` | Dataset statistics |
 | `health()` | Public service health |
@@ -152,7 +152,7 @@ Polymarket semantics:
 | `trendingCountries({ days, limit, offset, source })` | Trending countries from news |
 | `stock(ticker, { days })` | Detailed news sentiment for a ticker |
 | `explain(ticker)` | AI-generated explanation from news context |
-| `search(query)` | Search stocks in the news dataset |
+| `search(query, { days, limit })` | Search stocks in the news dataset with recent-period summaries |
 | `compare(tickers, { days })` | Compare up to 10 stocks in news |
 | `stats()` | News dataset statistics |
 | `health()` | Public news service health |
@@ -165,7 +165,7 @@ Polymarket semantics:
 | `trendingSectors({ days, limit, offset })` | Trending sectors |
 | `trendingCountries({ days, limit, offset })` | Trending countries |
 | `stock(ticker, { days })` | Detailed X/Twitter sentiment |
-| `search(query)` | Search stocks |
+| `search(query, { days, limit })` | Search stocks with recent-period summaries |
 | `compare(tickers, { days })` | Compare stocks |
 | `stats()` | Dataset statistics |
 | `health()` | Public service health |
@@ -178,7 +178,7 @@ Polymarket semantics:
 | `trendingSectors({ days, limit, offset })` | Trending sectors |
 | `trendingCountries({ days, limit, offset })` | Trending countries |
 | `stock(ticker, { days })` | Detailed Polymarket activity, sentiment, and relevance-sorted market questions |
-| `search(query)` | Search stocks |
+| `search(query, { days, limit })` | Search stocks with recent-period summaries |
 | `compare(tickers, { days })` | Compare stocks with windowed Polymarket activity signals |
 | `stats()` | Dataset statistics |
 | `health()` | Public service health |

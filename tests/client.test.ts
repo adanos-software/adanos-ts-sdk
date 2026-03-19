@@ -19,16 +19,31 @@ const TRENDING_STOCK = {
 };
 
 const STOCK_SENTIMENT = {
-  ticker: 'TSLA', found: true,
+  ticker: 'TSLA', found: true, mentions: 342, total_mentions: 342,
+  daily_trend: [{ date: '2026-03-05', mentions: 52, sentiment_score: 0.31, sentiment: 0.31, buzz_score: 42.8 }],
 };
 
 const SEARCH_RESPONSE = {
-  query: 'Tesla', count: 1,
-  results: [{ ticker: 'TSLA', name: 'Tesla Inc' }],
+  query: 'Tesla', count: 1, period_days: 7,
+  results: [{
+    ticker: 'TSLA',
+    name: 'Tesla Inc',
+    summary: {
+      mentions: 342,
+      buzz_score: 87.5,
+      trend: 'rising',
+      sentiment_score: 0.23,
+      bullish_pct: 45,
+      bearish_pct: 18,
+      unique_posts: 45,
+      subreddit_count: 8,
+      total_upvotes: 15234,
+    },
+  }],
 };
 
 const POLYMARKET_SEARCH_RESPONSE = {
-  query: 'AAPL', count: 1,
+  query: 'AAPL', count: 1, period_days: 7,
   results: [{
     ticker: 'AAPL',
     name: 'Apple Inc.',
@@ -37,12 +52,38 @@ const POLYMARKET_SEARCH_RESPONSE = {
     sector: 'Technology',
     country: 'United States',
     aliases: ['Apple'],
-    trade_count: 12,
+    summary: {
+      buzz_score: 71.4,
+      trend: 'rising',
+      trade_count: 12,
+      market_count: 4,
+      unique_traders: 6,
+      sentiment_score: 0.18,
+      bullish_pct: 67,
+      bearish_pct: 33,
+      total_liquidity: 94750.0,
+    },
   }],
 };
 
 const COMPARE_RESPONSE = {
-  period_days: 7, stocks: [],
+  period_days: 7,
+  stocks: [{
+    ticker: 'TSLA',
+    company_name: 'Tesla Inc.',
+    buzz_score: 87.5,
+    trend: 'rising',
+    mentions: 342,
+    unique_posts: 45,
+    subreddit_count: 8,
+    sentiment_score: 0.23,
+    sentiment: 0.23,
+    bullish_pct: 45,
+    bearish_pct: 18,
+    total_upvotes: 15234,
+    upvotes: 15234,
+    trend_history: [45.2, 52.1, 48.7, 67.3, 72.1, 78.4, 87.5],
+  }],
 };
 
 const EXPLAIN_RESPONSE = {
@@ -55,7 +96,13 @@ const X_TRENDING_STOCK = {
   ticker: 'NVDA', buzz_score: 90.0, trend: 'rising', mentions: 200,
 };
 
-const X_STOCK_DETAIL = { ticker: 'NVDA', found: true };
+const X_STOCK_DETAIL = {
+  ticker: 'NVDA',
+  found: true,
+  mentions: 156,
+  total_mentions: 156,
+  daily_trend: [{ date: '2026-03-05', mentions: 21, sentiment_score: 0.27, sentiment: 0.27, avg_rank: 3.2, buzz_score: 56.1 }],
+};
 
 const TRENDING_SECTOR = {
   sector: 'Technology', buzz_score: 75.0, trend: 'rising',
@@ -82,8 +129,10 @@ const NEWS_STOCK_SENTIMENT = {
   ticker: 'NVDA',
   found: true,
   buzz_score: 79.2,
+  mentions: 309,
   total_mentions: 309,
   source_count: 25,
+  daily_trend: [{ date: '2026-03-05', mentions: 41, sentiment_score: 0.58, sentiment: 0.58, buzz_score: 62.4 }],
   top_sources: [{ source: 'reuters', count: 22 }],
   top_mentions: [{
     text_snippet: 'NVIDIA beats earnings estimates.',
@@ -98,10 +147,16 @@ const NEWS_COMPARE_RESPONSE = {
   period_days: 7,
   stocks: [{
     ticker: 'NVDA',
+    company_name: 'NVIDIA Corporation',
     buzz_score: 79.2,
+    trend: 'rising',
     mentions: 309,
     source_count: 25,
+    sentiment_score: 0.44,
     sentiment: 0.44,
+    bullish_pct: 81,
+    bearish_pct: 8,
+    trend_history: [58.2, 62.1, 79.2],
   }],
 };
 
@@ -163,6 +218,7 @@ const POLYMARKET_TRENDING_STOCK = {
 const POLYMARKET_STOCK_DETAIL = {
   ticker: 'AAPL',
   found: true,
+  daily_trend: [{ date: '2026-03-05', trade_count: 5, sentiment_score: 0.22, sentiment: 0.22, buzz_score: 64.1 }],
 };
 
 const POLYMARKET_COMPARE_RESPONSE = {
@@ -170,10 +226,16 @@ const POLYMARKET_COMPARE_RESPONSE = {
   stocks: [{
     ticker: 'AAPL',
     buzz_score: 71.4,
+    trend: 'rising',
     trade_count: 8,
     market_count: 4,
     unique_traders: 6,
+    sentiment_score: 0.18,
+    sentiment: 0.18,
+    bullish_pct: 67,
+    bearish_pct: 33,
     total_liquidity: 94750.0,
+    trend_history: [48.2, 51.0, 55.3, 61.1, 65.8, 69.2, 71.4],
   }],
 };
 
@@ -308,6 +370,10 @@ describe('Reddit stock', () => {
     const result = await client().reddit.stock('TSLA');
     expect(result.ticker).toBe('TSLA');
     expect(result.found).toBe(true);
+    expect(result.mentions).toBe(342);
+    expect(result.total_mentions).toBe(342);
+    expect(result.daily_trend?.[0].sentiment_score).toBe(0.31);
+    expect(result.daily_trend?.[0].sentiment).toBe(0.31);
     expect(requestUrl().pathname).toBe('/reddit/stocks/v1/stock/TSLA');
   });
 
@@ -338,12 +404,16 @@ describe('Reddit explain', () => {
 // ── Reddit search ───────────────────────────────────────────────────
 
 describe('Reddit search', () => {
-  it('searches and passes query param', async () => {
+  it('searches and passes query params', async () => {
     mockFetch(200, SEARCH_RESPONSE);
-    const result = await client().reddit.search('Tesla');
+    const result = await client().reddit.search('Tesla', { days: 14, limit: 5 });
     expect(requestParams().q).toBe('Tesla');
+    expect(requestParams().days).toBe('14');
+    expect(requestParams().limit).toBe('5');
     expect(result.count).toBe(1);
+    expect(result.period_days).toBe(7);
     expect(result.results[0].ticker).toBe('TSLA');
+    expect(result.results[0].summary.mentions).toBe(342);
   });
 });
 
@@ -352,9 +422,11 @@ describe('Reddit search', () => {
 describe('Reddit compare', () => {
   it('joins tickers with comma', async () => {
     mockFetch(200, COMPARE_RESPONSE);
-    await client().reddit.compare(['TSLA', 'AAPL'], { days: 7 });
+    const result = await client().reddit.compare(['TSLA', 'AAPL'], { days: 7 });
     expect(requestParams().tickers).toBe('TSLA,AAPL');
     expect(requestParams().days).toBe('7');
+    expect(result.stocks[0].total_upvotes).toBe(15234);
+    expect(result.stocks[0].trend_history.at(-1)).toBe(87.5);
   });
 });
 
@@ -406,7 +478,10 @@ describe('News stock', () => {
     mockFetch(200, NEWS_STOCK_SENTIMENT);
     const result = await client().news.stock('NVDA', { days: 7 });
     expect(result.found).toBe(true);
+    expect(result.mentions).toBe(309);
+    expect(result.total_mentions).toBe(309);
     expect(result.source_count).toBe(25);
+    expect(result.daily_trend?.[0].sentiment_score).toBe(0.58);
     expect(result.top_sources?.[0].source).toBe('reuters');
     expect(result.top_mentions?.[0].source).toBe('reuters');
     expect(requestUrl().pathname).toBe('/news/stocks/v1/stock/NVDA');
@@ -420,6 +495,8 @@ describe('News compare', () => {
     mockFetch(200, NEWS_COMPARE_RESPONSE);
     const result = await client().news.compare(['NVDA', 'AAPL'], { days: 7 });
     expect(result.stocks[0].source_count).toBe(25);
+    expect(result.stocks[0].sentiment_score).toBe(0.44);
+    expect(result.stocks[0].trend_history.at(-1)).toBe(79.2);
     expect(requestUrl().pathname).toBe('/news/stocks/v1/compare');
     expect(requestParams().tickers).toBe('NVDA,AAPL');
     expect(requestParams().days).toBe('7');
@@ -435,12 +512,32 @@ describe('News explain/search', () => {
     expect(Object.keys(requestParams())).toHaveLength(0);
   });
 
-  it('does not send a source param for search', async () => {
-    mockFetch(200, SEARCH_RESPONSE);
-    await client().news.search('NVIDIA');
+  it('does not send a source param for search and forwards search options', async () => {
+    mockFetch(200, {
+      query: 'NVIDIA',
+      count: 1,
+      period_days: 7,
+      results: [{
+        ticker: 'NVDA',
+        name: 'NVIDIA Corporation',
+        summary: {
+          mentions: 309,
+          buzz_score: 79.2,
+          trend: 'rising',
+          sentiment_score: 0.44,
+          bullish_pct: 81,
+          bearish_pct: 8,
+          source_count: 25,
+        },
+      }],
+    });
+    const result = await client().news.search('NVIDIA', { days: 7, limit: 10 });
     expect(requestUrl().pathname).toBe('/news/stocks/v1/search');
     expect(requestParams().q).toBe('NVIDIA');
+    expect(requestParams().days).toBe('7');
+    expect(requestParams().limit).toBe('10');
     expect(requestParams().source).toBeUndefined();
+    expect(result.results[0].summary.source_count).toBe(25);
   });
 });
 
@@ -513,6 +610,9 @@ describe('X stock', () => {
     mockFetch(200, X_STOCK_DETAIL);
     const result = await client().x.stock('NVDA');
     expect(result.ticker).toBe('NVDA');
+    expect(result.mentions).toBe(156);
+    expect(result.total_mentions).toBe(156);
+    expect(result.daily_trend?.[0].sentiment_score).toBe(0.27);
     expect(requestUrl().pathname).toBe('/x/stocks/v1/stock/NVDA');
   });
 });
@@ -520,10 +620,31 @@ describe('X stock', () => {
 // ── X search ────────────────────────────────────────────────────────
 
 describe('X search', () => {
-  it('searches stocks', async () => {
-    mockFetch(200, { ...SEARCH_RESPONSE, query: 'NVDA' });
-    await client().x.search('NVDA');
+  it('searches stocks with summary payload', async () => {
+    mockFetch(200, {
+      query: 'NVDA',
+      count: 1,
+      period_days: 7,
+      results: [{
+        ticker: 'NVDA',
+        name: 'NVIDIA Corporation',
+        summary: {
+          mentions: 156,
+          buzz_score: 72.5,
+          trend: 'rising',
+          sentiment_score: 0.35,
+          bullish_pct: 45,
+          bearish_pct: 12,
+          unique_tweets: 42,
+          total_upvotes: 2847,
+        },
+      }],
+    });
+    const result = await client().x.search('NVDA', { days: 7, limit: 3 });
     expect(requestParams().q).toBe('NVDA');
+    expect(requestParams().days).toBe('7');
+    expect(requestParams().limit).toBe('3');
+    expect(result.results[0].summary.unique_tweets).toBe(42);
   });
 });
 
@@ -532,8 +653,9 @@ describe('X search', () => {
 describe('X compare', () => {
   it('joins tickers', async () => {
     mockFetch(200, COMPARE_RESPONSE);
-    await client().x.compare(['NVDA', 'AMD']);
+    const result = await client().x.compare(['NVDA', 'AMD']);
     expect(requestParams().tickers).toBe('NVDA,AMD');
+    expect(result.stocks[0].trend_history.at(-1)).toBe(87.5);
   });
 
   it('passes days param', async () => {
@@ -594,17 +716,20 @@ describe('Polymarket stock', () => {
     mockFetch(200, POLYMARKET_STOCK_DETAIL);
     const result = await client().polymarket.stock('AAPL');
     expect(result.ticker).toBe('AAPL');
+    expect(result.daily_trend?.[0].sentiment_score).toBe(0.22);
     expect(requestUrl().pathname).toBe('/polymarket/stocks/v1/stock/AAPL');
   });
 });
 
 describe('Polymarket search', () => {
-  it('searches stocks', async () => {
+  it('searches stocks with summary payload', async () => {
     mockFetch(200, POLYMARKET_SEARCH_RESPONSE);
-    const result = await client().polymarket.search('AAPL');
+    const result = await client().polymarket.search('AAPL', { days: 30, limit: 4 });
     expect(requestParams().q).toBe('AAPL');
+    expect(requestParams().days).toBe('30');
+    expect(requestParams().limit).toBe('4');
     expect(result.count).toBe(1);
-    expect(result.results[0].trade_count).toBe(12);
+    expect(result.results[0].summary.trade_count).toBe(12);
   });
 });
 
@@ -615,6 +740,7 @@ describe('Polymarket compare', () => {
     expect(requestParams().tickers).toBe('AAPL,TSLA');
     expect(result.stocks[0].trade_count).toBe(8);
     expect(result.stocks[0].market_count).toBe(4);
+    expect(result.stocks[0].trend_history.at(-1)).toBe(71.4);
   });
 });
 
