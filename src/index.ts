@@ -1,5 +1,5 @@
 /**
- * Adanos Finance Sentiment API — TypeScript SDK
+ * Adanos Market Sentiment API — TypeScript SDK
  *
  * Analyze stock sentiment across News, Reddit, X/Twitter, and Polymarket.
  *
@@ -67,6 +67,7 @@ export interface StockOptions {
 /** Alias — compare accepts the same options as a single-stock lookup. */
 export type CompareOptions = StockOptions;
 export type SearchOptions = Pick<TrendingGroupOptions, 'days' | 'limit'>;
+export type MarketSentimentOptions = Pick<TrendingGroupOptions, 'days'>;
 
 export interface NewsSourceOptions {
   /** Optional strict source filter (canonical source id or known alias). */
@@ -229,6 +230,31 @@ export interface CompareStockItem {
   trend_history: number[];
 }
 
+export interface MarketSentimentDriver {
+  ticker: string;
+  buzz_score: number;
+  sentiment_score?: number | null;
+  mentions: number;
+}
+
+export interface RedditMarketSentiment {
+  buzz_score: number;
+  trend?: 'rising' | 'falling' | 'stable' | null;
+  mentions: number;
+  unique_posts: number;
+  subreddit_count: number;
+  total_upvotes: number;
+  active_tickers: number;
+  sentiment_score?: number | null;
+  positive_count: number;
+  negative_count: number;
+  neutral_count: number;
+  bullish_pct: number;
+  bearish_pct: number;
+  trend_history: number[];
+  drivers: MarketSentimentDriver[];
+}
+
 interface TrendingGroupBase {
   buzz_score: number;
   trend: 'rising' | 'falling' | 'stable';
@@ -360,6 +386,23 @@ export interface NewsCompareResponse {
   stocks: NewsCompareStockItem[];
 }
 
+export interface NewsMarketSentiment {
+  buzz_score: number;
+  trend?: 'rising' | 'falling' | 'stable' | null;
+  mentions: number;
+  unique_articles: number;
+  source_count: number;
+  active_tickers: number;
+  sentiment_score?: number | null;
+  positive_count: number;
+  negative_count: number;
+  neutral_count: number;
+  bullish_pct: number;
+  bearish_pct: number;
+  trend_history: number[];
+  drivers: MarketSentimentDriver[];
+}
+
 // X/Twitter response types
 
 export interface XTrendingStock {
@@ -464,6 +507,24 @@ export interface XTrendingCountry extends XTrendingGroupBase {
   country: string;
 }
 
+export interface XMarketSentiment {
+  buzz_score: number;
+  trend?: 'rising' | 'falling' | 'stable' | null;
+  mentions: number;
+  unique_tweets: number;
+  unique_authors: number;
+  total_upvotes: number;
+  active_tickers: number;
+  sentiment_score?: number | null;
+  positive_count: number;
+  negative_count: number;
+  neutral_count: number;
+  bullish_pct: number;
+  bearish_pct: number;
+  trend_history: number[];
+  drivers: MarketSentimentDriver[];
+}
+
 // Polymarket response types
 
 export interface PolymarketTrendingStock {
@@ -565,6 +626,31 @@ export interface PolymarketCompareStockItem {
 export interface PolymarketCompareResponse {
   period_days: number;
   stocks: PolymarketCompareStockItem[];
+}
+
+export interface PolymarketMarketSentimentDriver {
+  ticker: string;
+  trade_count: number;
+  buzz_score: number;
+  sentiment_score?: number | null;
+}
+
+export interface PolymarketMarketSentiment {
+  buzz_score: number;
+  trend?: 'rising' | 'falling' | 'stable' | null;
+  trade_count: number;
+  market_count: number;
+  unique_traders: number;
+  total_liquidity: number;
+  active_tickers: number;
+  sentiment_score?: number | null;
+  positive_count: number;
+  negative_count: number;
+  neutral_count: number;
+  bullish_pct: number;
+  bearish_pct: number;
+  trend_history: number[];
+  drivers: PolymarketMarketSentimentDriver[];
 }
 
 export interface PolymarketSearchSummary {
@@ -725,6 +811,13 @@ export class RedditNamespace extends PlatformNamespace {
       days: options.days,
     });
   }
+
+  /** Get the service-level Reddit market sentiment snapshot. */
+  async marketSentiment(options: MarketSentimentOptions = {}): Promise<RedditMarketSentiment> {
+    return this.request('/market-sentiment', {
+      days: options.days,
+    });
+  }
 }
 
 export class NewsNamespace extends PlatformNamespace {
@@ -789,6 +882,13 @@ export class NewsNamespace extends PlatformNamespace {
   async compare(tickers: string[], options: CompareOptions = {}): Promise<NewsCompareResponse> {
     return this.request('/compare', {
       tickers: tickers.join(','),
+      days: options.days,
+    });
+  }
+
+  /** Get the service-level News market sentiment snapshot. */
+  async marketSentiment(options: MarketSentimentOptions = {}): Promise<NewsMarketSentiment> {
+    return this.request('/market-sentiment', {
       days: options.days,
     });
   }
@@ -861,6 +961,13 @@ export class XNamespace extends PlatformNamespace {
       days: options.days,
     });
   }
+
+  /** Get the service-level X/Twitter market sentiment snapshot. */
+  async marketSentiment(options: MarketSentimentOptions = {}): Promise<XMarketSentiment> {
+    return this.request('/market-sentiment', {
+      days: options.days,
+    });
+  }
 }
 
 export class PolymarketNamespace extends PlatformNamespace {
@@ -920,6 +1027,13 @@ export class PolymarketNamespace extends PlatformNamespace {
       days: options.days,
     });
   }
+
+  /** Get the service-level Polymarket market sentiment snapshot. */
+  async marketSentiment(options: MarketSentimentOptions = {}): Promise<PolymarketMarketSentiment> {
+    return this.request('/market-sentiment', {
+      days: options.days,
+    });
+  }
 }
 
 // ── Client ──────────────────────────────────────────────────────────
@@ -931,7 +1045,7 @@ export class AdanosClient {
   readonly polymarket: PolymarketNamespace;
 
   /**
-   * Create a new Finance Sentiment API client.
+   * Create a new Adanos Market Sentiment API client.
    *
    * @param options.apiKey - Your API key (`adanos_api_key_here`).
    * @param options.baseUrl - API base URL. Default: `https://api.adanos.org`.

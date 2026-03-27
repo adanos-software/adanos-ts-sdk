@@ -1,6 +1,6 @@
 # finance-sentiment
 
-`finance-sentiment` is the public TypeScript SDK for the [Adanos Finance Sentiment API](https://api.adanos.org/docs).
+`finance-sentiment` is the public TypeScript SDK for the [Adanos Market Sentiment API](https://api.adanos.org/docs).
 
 It gives you typed access to:
 - Reddit stock sentiment
@@ -44,6 +44,7 @@ console.log(explanation.explanation);
 ## What You Can Do
 
 - Rank trending stocks across Reddit, News, X, and Polymarket
+- Pull service-level market sentiment snapshots across every stock namespace
 - Pull detailed ticker reports for a configurable lookback window
 - Search and compare tickers across datasets
 - Generate AI-written explanations for Reddit and News stock trends
@@ -72,6 +73,7 @@ const tsla = await client.reddit.stock("TSLA", { days: 14 });
 const explanation = await client.reddit.explain("TSLA");
 const results = await client.reddit.search("Tesla", { days: 7, limit: 10 });
 const comparison = await client.reddit.compare(["TSLA", "AAPL", "MSFT"], { days: 7 });
+const market = await client.reddit.marketSentiment({ days: 7 });
 ```
 
 ### News
@@ -88,6 +90,7 @@ const nvda = await client.news.stock("NVDA", { days: 7 });
 const explanation = await client.news.explain("NVDA");
 const results = await client.news.search("Nvidia", { days: 7, limit: 10 });
 const comparison = await client.news.compare(["NVDA", "AAPL"], { days: 7 });
+const market = await client.news.marketSentiment({ days: 7 });
 const stats = await client.news.stats();
 const health = await client.news.health();
 ```
@@ -105,6 +108,7 @@ const countries = await client.x.trendingCountries({ days: 1, limit: 10 });
 const nvda = await client.x.stock("NVDA");
 const results = await client.x.search("Nvidia", { days: 7, limit: 10 });
 const comparison = await client.x.compare(["NVDA", "AMD"], { days: 7 });
+const market = await client.x.marketSentiment({ days: 7 });
 ```
 
 ### Polymarket
@@ -120,6 +124,7 @@ const countries = await client.polymarket.trendingCountries({ days: 7, limit: 10
 const aapl = await client.polymarket.stock("AAPL");
 const results = await client.polymarket.search("Apple", { days: 7, limit: 10 });
 const comparison = await client.polymarket.compare(["AAPL", "TSLA"], { days: 7 });
+const market = await client.polymarket.marketSentiment({ days: 7 });
 ```
 
 Polymarket semantics:
@@ -140,6 +145,7 @@ Polymarket semantics:
 | `explain(ticker)` | AI-generated trend explanation |
 | `search(query, { days, limit })` | Search stocks by name or ticker with recent-period summaries |
 | `compare(tickers, { days })` | Compare up to 10 stocks |
+| `marketSentiment({ days })` | Service-level Reddit market sentiment snapshot |
 | `stats()` | Dataset statistics |
 | `health()` | Public service health |
 
@@ -154,6 +160,7 @@ Polymarket semantics:
 | `explain(ticker)` | AI-generated explanation from news context |
 | `search(query, { days, limit })` | Search stocks in the news dataset with recent-period summaries |
 | `compare(tickers, { days })` | Compare up to 10 stocks in news |
+| `marketSentiment({ days })` | Service-level News market sentiment snapshot |
 | `stats()` | News dataset statistics |
 | `health()` | Public news service health |
 
@@ -167,6 +174,7 @@ Polymarket semantics:
 | `stock(ticker, { days })` | Detailed X/Twitter sentiment |
 | `search(query, { days, limit })` | Search stocks with recent-period summaries |
 | `compare(tickers, { days })` | Compare stocks |
+| `marketSentiment({ days })` | Service-level X/Twitter market sentiment snapshot |
 | `stats()` | Dataset statistics |
 | `health()` | Public service health |
 
@@ -180,6 +188,7 @@ Polymarket semantics:
 | `stock(ticker, { days })` | Detailed Polymarket activity, sentiment, and relevance-sorted market questions |
 | `search(query, { days, limit })` | Search stocks with recent-period summaries |
 | `compare(tickers, { days })` | Compare stocks with windowed Polymarket activity signals |
+| `marketSentiment({ days })` | Service-level Polymarket market sentiment snapshot |
 | `stats()` | Dataset statistics |
 | `health()` | Public service health |
 

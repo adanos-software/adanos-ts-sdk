@@ -1,7 +1,7 @@
 {
   "name": "finance-sentiment",
-  "version": "1.1.0",
-  "description": "TypeScript SDK for the Adanos Finance Sentiment API",
+  "version": "1.2.0",
+  "description": "TypeScript SDK for the Adanos Market Sentiment API",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

@@ -86,6 +86,24 @@ const COMPARE_RESPONSE = {
   }],
 };
 
+const REDDIT_MARKET_SENTIMENT = {
+  buzz_score: 57.4,
+  trend: 'stable',
+  mentions: 3992,
+  unique_posts: 418,
+  subreddit_count: 21,
+  total_upvotes: 15234,
+  active_tickers: 1000,
+  sentiment_score: 0.045,
+  positive_count: 1440,
+  negative_count: 998,
+  neutral_count: 1554,
+  bullish_pct: 36,
+  bearish_pct: 25,
+  trend_history: [49.8, 52.1, 50.7, 55.6, 58.3, 60.2, 57.4],
+  drivers: [{ ticker: 'SPY', mentions: 129, buzz_score: 74.1, sentiment_score: 0.009 }],
+};
+
 const EXPLAIN_RESPONSE = {
   ticker: 'TSLA', explanation: 'Tesla is trending due to...',
   cached: false, generated_at: '2026-02-16T10:00:00Z',
@@ -158,6 +176,23 @@ const NEWS_COMPARE_RESPONSE = {
     bearish_pct: 8,
     trend_history: [58.2, 62.1, 79.2],
   }],
+};
+
+const NEWS_MARKET_SENTIMENT = {
+  buzz_score: 53.8,
+  trend: 'stable',
+  mentions: 1298,
+  unique_articles: 911,
+  source_count: 44,
+  active_tickers: 233,
+  sentiment_score: 0.064,
+  positive_count: 512,
+  negative_count: 308,
+  neutral_count: 478,
+  bullish_pct: 39,
+  bearish_pct: 24,
+  trend_history: [49.1, 50.4, 48.7, 52.2, 55.1, 54.3, 53.8],
+  drivers: [{ ticker: 'AAPL', mentions: 87, buzz_score: 69.7, sentiment_score: 0.22 }],
 };
 
 const NEWS_TRENDING_SECTOR = {
@@ -237,6 +272,42 @@ const POLYMARKET_COMPARE_RESPONSE = {
     total_liquidity: 94750.0,
     trend_history: [48.2, 51.0, 55.3, 61.1, 65.8, 69.2, 71.4],
   }],
+};
+
+const X_MARKET_SENTIMENT = {
+  buzz_score: 56.2,
+  trend: 'rising',
+  mentions: 2847,
+  unique_tweets: 913,
+  unique_authors: 604,
+  total_upvotes: 28471,
+  active_tickers: 442,
+  sentiment_score: 0.081,
+  positive_count: 1198,
+  negative_count: 741,
+  neutral_count: 908,
+  bullish_pct: 42,
+  bearish_pct: 26,
+  trend_history: [48.9, 50.7, 52.6, 54.4, 57.1, 58.3, 56.2],
+  drivers: [{ ticker: 'TSLA', mentions: 156, buzz_score: 72.5, sentiment_score: 0.35 }],
+};
+
+const POLYMARKET_MARKET_SENTIMENT = {
+  buzz_score: 58.4,
+  trend: 'rising',
+  trade_count: 512,
+  market_count: 93,
+  unique_traders: 281,
+  total_liquidity: 245000.0,
+  active_tickers: 31,
+  sentiment_score: 0.11,
+  positive_count: 41,
+  negative_count: 29,
+  neutral_count: 23,
+  bullish_pct: 44,
+  bearish_pct: 31,
+  trend_history: [52.1, 54.0, 56.8, 59.2, 61.0, 60.1, 58.4],
+  drivers: [{ ticker: 'AAPL', trade_count: 52, buzz_score: 68.9, sentiment_score: 0.28 }],
 };
 
 // ── Helpers ─────────────────────────────────────────────────────────
@@ -430,6 +501,16 @@ describe('Reddit compare', () => {
   });
 });
 
+describe('Reddit market sentiment', () => {
+  it('returns service-level market sentiment', async () => {
+    mockFetch(200, REDDIT_MARKET_SENTIMENT);
+    const result = await client().reddit.marketSentiment({ days: 7 });
+    expect(requestUrl().pathname).toBe('/reddit/stocks/v1/market-sentiment');
+    expect(requestParams().days).toBe('7');
+    expect(result.drivers[0].ticker).toBe('SPY');
+  });
+});
+
 // ── Reddit trending sectors ─────────────────────────────────────────
 
 describe('Reddit trending sectors', () => {
@@ -580,6 +661,16 @@ describe('News stats/health', () => {
   });
 });
 
+describe('News market sentiment', () => {
+  it('returns service-level market sentiment', async () => {
+    mockFetch(200, NEWS_MARKET_SENTIMENT);
+    const result = await client().news.marketSentiment({ days: 3 });
+    expect(requestUrl().pathname).toBe('/news/stocks/v1/market-sentiment');
+    expect(requestParams().days).toBe('3');
+    expect(result.source_count).toBe(44);
+  });
+});
+
 // ── X trending ──────────────────────────────────────────────────────
 
 describe('X trending', () => {
@@ -665,6 +756,16 @@ describe('X compare', () => {
   });
 });
 
+describe('X market sentiment', () => {
+  it('returns service-level market sentiment', async () => {
+    mockFetch(200, X_MARKET_SENTIMENT);
+    const result = await client().x.marketSentiment();
+    expect(requestUrl().pathname).toBe('/x/stocks/v1/market-sentiment');
+    expect(requestParams().days).toBeUndefined();
+    expect(result.unique_authors).toBe(604);
+  });
+});
+
 // ── X trending sectors / countries ──────────────────────────────────
 
 describe('X trending sectors', () => {
@@ -741,6 +842,16 @@ describe('Polymarket compare', () => {
     expect(result.stocks[0].trade_count).toBe(8);
     expect(result.stocks[0].market_count).toBe(4);
     expect(result.stocks[0].trend_history.at(-1)).toBe(71.4);
+  });
+});
+
+describe('Polymarket market sentiment', () => {
+  it('returns service-level market sentiment', async () => {
+    mockFetch(200, POLYMARKET_MARKET_SENTIMENT);
+    const result = await client().polymarket.marketSentiment({ days: 2 });
+    expect(requestUrl().pathname).toBe('/polymarket/stocks/v1/market-sentiment');
+    expect(requestParams().days).toBe('2');
+    expect(result.drivers[0].trade_count).toBe(52);
   });
 });
 
