@@ -1,5 +1,7 @@
 # finance-sentiment
 
+[![npm version](https://img.shields.io/npm/v/finance-sentiment.svg)](https://www.npmjs.com/package/finance-sentiment)
+
 `finance-sentiment` is the public TypeScript SDK for the [Adanos Market Sentiment API](https://api.adanos.org/docs).
 
 It gives you typed access to:
