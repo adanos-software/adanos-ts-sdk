@@ -108,6 +108,7 @@ const trending = await client.x.trending({ days: 1, limit: 20 });
 const sectors = await client.x.trendingSectors({ days: 1, limit: 10 });
 const countries = await client.x.trendingCountries({ days: 1, limit: 10 });
 const nvda = await client.x.stock("NVDA");
+const explanation = await client.x.explain("NVDA");
 const results = await client.x.search("Nvidia", { days: 7, limit: 10 });
 const comparison = await client.x.compare(["NVDA", "AMD"], { days: 7 });
 const market = await client.x.marketSentiment({ days: 7 });
@@ -174,6 +175,7 @@ Polymarket semantics:
 | `trendingSectors({ days, limit, offset })` | Trending sectors |
 | `trendingCountries({ days, limit, offset })` | Trending countries |
 | `stock(ticker, { days })` | Detailed X/Twitter sentiment |
+| `explain(ticker)` | AI-generated explanation from X/Twitter context |
 | `search(query, { days, limit })` | Search stocks with recent-period summaries |
 | `compare(tickers, { days })` | Compare stocks |
 | `marketSentiment({ days })` | Service-level X/Twitter market sentiment snapshot |
