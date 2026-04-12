@@ -708,6 +708,25 @@ describe('X stock', () => {
   });
 });
 
+// ── X explain ───────────────────────────────────────────────────────
+
+describe('X explain', () => {
+  it('returns explanation without query params', async () => {
+    mockFetch(200, EXPLAIN_RESPONSE);
+    const result = await client().x.explain('NVDA');
+    expect(result.explanation).toBe(EXPLAIN_RESPONSE.explanation);
+    expect(requestUrl().pathname).toBe('/x/stocks/v1/stock/NVDA/explain');
+    expect(Object.keys(requestParams())).toHaveLength(0);
+  });
+
+  it('encodes ticker path segments', async () => {
+    mockFetch(200, { ...EXPLAIN_RESPONSE, ticker: 'GME' });
+    const result = await client().x.explain('$GME');
+    expect(result.ticker).toBe('GME');
+    expect(requestUrl().pathname).toBe('/x/stocks/v1/stock/%24GME/explain');
+  });
+});
+
 // ── X search ────────────────────────────────────────────────────────
 
 describe('X search', () => {

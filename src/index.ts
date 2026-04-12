@@ -945,6 +945,11 @@ export class XNamespace extends PlatformNamespace {
     });
   }
 
+  /** Get AI-generated explanation for a stock's X/Twitter trend. */
+  async explain(ticker: string): Promise<StockExplanationResponse> {
+    return this.request(`/stock/${encodeURIComponent(ticker)}/explain`);
+  }
+
   /** Search for stocks by name or ticker on X/Twitter. */
   async search(query: string, options: SearchOptions = {}): Promise<XSearchResponse> {
     return this.request('/search', {
