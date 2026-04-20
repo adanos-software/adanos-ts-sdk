@@ -559,6 +559,7 @@ describe('News stock', () => {
     expect('total_mentions' in result).toBe(false);
     expect(result.source_count).toBe(25);
     expect(result.daily_trend?.[0].sentiment_score).toBe(0.58);
+    expect('sentiment' in (result.daily_trend?.[0] ?? {})).toBe(false);
     expect(result.top_sources?.[0].source).toBe('reuters');
     expect(result.top_mentions?.[0].source).toBe('reuters');
     expect(requestUrl().pathname).toBe('/news/stocks/v1/stock/NVDA');
@@ -701,6 +702,7 @@ describe('X stock', () => {
     expect(result.mentions).toBe(156);
     expect('total_mentions' in result).toBe(false);
     expect(result.daily_trend?.[0].sentiment_score).toBe(0.27);
+    expect('sentiment' in (result.daily_trend?.[0] ?? {})).toBe(false);
     expect(requestUrl().pathname).toBe('/x/stocks/v1/stock/NVDA');
   });
 });
