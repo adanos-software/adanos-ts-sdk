@@ -104,7 +104,6 @@ export interface StockSentiment {
   company_name?: string | null;
   buzz_score?: number | null;
   mentions?: number | null;
-  total_mentions?: number | null;
   sentiment_score?: number | null;
   positive_count?: number | null;
   negative_count?: number | null;
@@ -130,7 +129,6 @@ export interface DailyTrendItem {
   date: string;
   mentions: number;
   sentiment_score?: number | null;
-  sentiment?: number | null;
   buzz_score?: number | null;
 }
 
@@ -222,11 +220,9 @@ export interface CompareStockItem {
   unique_posts: number;
   subreddit_count: number;
   sentiment_score?: number | null;
-  sentiment?: number | null;
   bullish_pct?: number | null;
   bearish_pct?: number | null;
   total_upvotes: number;
-  upvotes?: number | null;
   trend_history: number[];
 }
 
@@ -332,7 +328,6 @@ export interface NewsStockSentiment {
   company_name?: string | null;
   buzz_score?: number | null;
   mentions?: number | null;
-  total_mentions?: number | null;
   sentiment_score?: number | null;
   positive_count?: number | null;
   negative_count?: number | null;
@@ -375,7 +370,6 @@ export interface NewsCompareStockItem {
   mentions: number;
   source_count: number;
   sentiment_score?: number | null;
-  sentiment?: number | null;
   bullish_pct?: number | null;
   bearish_pct?: number | null;
   trend_history: number[];
@@ -426,7 +420,6 @@ export interface XStockDetail {
   company_name?: string | null;
   buzz_score?: number | null;
   mentions?: number | null;
-  total_mentions?: number | null;
   sentiment_score?: number | null;
   positive_count?: number | null;
   negative_count?: number | null;
@@ -446,7 +439,6 @@ export interface XDailyTrendItem {
   date: string;
   mentions: number;
   sentiment_score?: number | null;
-  sentiment?: number | null;
   avg_rank?: number | null;
   buzz_score?: number | null;
 }
@@ -546,7 +538,6 @@ export interface PolymarketDailyTrendItem {
   date: string;
   trade_count: number;
   sentiment_score?: number | null;
-  sentiment?: number | null;
   buzz_score?: number | null;
 }
 
@@ -616,7 +607,6 @@ export interface PolymarketCompareStockItem {
   market_count: number;
   unique_traders?: number | null;
   sentiment_score?: number | null;
-  sentiment?: number | null;
   bullish_pct?: number | null;
   bearish_pct?: number | null;
   total_liquidity: number;
