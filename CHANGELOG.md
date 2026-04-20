@@ -5,6 +5,11 @@ All notable changes to the Adanos TypeScript SDK will be documented in this file
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+## [2.0.0] - 2026-04-20
+
+### Breaking
+- Removed response type fields for API aliases removed in API `1.25.0`: `total_mentions` on detail responses, `sentiment` on daily trend and compare responses, and `upvotes` on compare responses. Use `mentions`, `sentiment_score`, and `total_upvotes`.
+
 ## [1.3.0] - 2026-04-12
 
 ### Added
