@@ -507,6 +507,23 @@ describe('Reddit market sentiment', () => {
   });
 });
 
+describe('Reddit raw mentions', () => {
+  it('fetches raw mentions and forwards inherited context flag', async () => {
+    mockFetch(200, {
+      ticker: 'TSLA',
+      period_days: 7,
+      count: 1,
+      results: [{ text_snippet: 'TSLA looks strong', created_utc: '2026-03-20T18:42:10Z', upvotes: 8, is_inherited: false }],
+    });
+    const result = await client().reddit.mentions('TSLA', { days: 7, limit: 10, includeInherited: true });
+    expect(requestUrl().pathname).toBe('/reddit/stocks/v1/stock/TSLA/mentions');
+    expect(requestParams().days).toBe('7');
+    expect(requestParams().limit).toBe('10');
+    expect(requestParams().include_inherited).toBe('true');
+    expect(result.results[0].text_snippet).toBe('TSLA looks strong');
+  });
+});
+
 // ── Reddit trending sectors ─────────────────────────────────────────
 
 describe('Reddit trending sectors', () => {
@@ -565,6 +582,22 @@ describe('News stock', () => {
     expect(requestUrl().pathname).toBe('/news/stocks/v1/stock/NVDA');
     expect(requestParams().days).toBe('7');
     expect(requestParams().source).toBeUndefined();
+  });
+});
+
+describe('News raw mentions', () => {
+  it('fetches raw news mentions', async () => {
+    mockFetch(200, {
+      ticker: 'NVDA',
+      period_days: 7,
+      count: 1,
+      results: [{ source: 'reuters', text_snippet: 'NVIDIA demand update' }],
+    });
+    const result = await client().news.mentions('NVDA', { days: 7, limit: 5 });
+    expect(requestUrl().pathname).toBe('/news/stocks/v1/stock/NVDA/mentions');
+    expect(requestParams().days).toBe('7');
+    expect(requestParams().limit).toBe('5');
+    expect(result.results[0].source).toBe('reuters');
   });
 });
 
@@ -707,6 +740,21 @@ describe('X stock', () => {
   });
 });
 
+describe('X raw mentions', () => {
+  it('fetches raw tweet mentions', async () => {
+    mockFetch(200, {
+      ticker: 'NVDA',
+      period_days: 7,
+      count: 1,
+      results: [{ tweet_id: '1', text_snippet: '$NVDA', likes: 9, retweets: 1, is_reply: false }],
+    });
+    const result = await client().x.mentions('NVDA', { days: 7, limit: 5 });
+    expect(requestUrl().pathname).toBe('/x/stocks/v1/stock/NVDA/mentions');
+    expect(requestParams().limit).toBe('5');
+    expect(result.results[0].tweet_id).toBe('1');
+  });
+});
+
 // ── X explain ───────────────────────────────────────────────────────
 
 describe('X explain', () => {
@@ -840,6 +888,34 @@ describe('Polymarket stock', () => {
   });
 });
 
+describe('Polymarket raw mentions', () => {
+  it('fetches raw market snapshots', async () => {
+    mockFetch(200, {
+      ticker: 'AAPL',
+      period_days: 7,
+      count: 1,
+      results: [{
+        condition_id: '0xabc',
+        event_id: '123',
+        question: 'AAPL up?',
+        market_type: 'up_down',
+        liquidity: 100,
+        volume_24h: 20,
+        trade_count: 2,
+        buy_trades: 1,
+        sell_trades: 1,
+        unique_traders: 2,
+        active: true,
+        fetched_at: '2026-04-20T15:00:00Z',
+      }],
+    });
+    const result = await client().polymarket.mentions('AAPL', { days: 7, limit: 5 });
+    expect(requestUrl().pathname).toBe('/polymarket/stocks/v1/stock/AAPL/mentions');
+    expect(requestParams().limit).toBe('5');
+    expect(result.results[0].condition_id).toBe('0xabc');
+  });
+});
+
 describe('Polymarket search', () => {
   it('searches stocks with summary payload', async () => {
     mockFetch(200, POLYMARKET_SEARCH_RESPONSE);
@@ -871,6 +947,41 @@ describe('Polymarket market sentiment', () => {
     expect(requestUrl().pathname).toBe('/polymarket/stocks/v1/market-sentiment');
     expect(requestParams().days).toBe('2');
     expect(result.drivers[0].trade_count).toBe(52);
+  });
+});
+
+describe('Reddit crypto', () => {
+  it('fetches crypto token details', async () => {
+    mockFetch(200, { symbol: 'BTC', found: true, mentions: 321 });
+    const result = await client().crypto.token('BTC', { days: 7 });
+    expect(requestUrl().pathname).toBe('/reddit/crypto/v1/token/BTC');
+    expect(requestParams().days).toBe('7');
+    expect(result.symbol).toBe('BTC');
+  });
+
+  it('fetches raw crypto mentions', async () => {
+    mockFetch(200, {
+      symbol: 'BTC',
+      period_days: 7,
+      count: 1,
+      results: [{ text_snippet: 'BTC range', created_utc: '2026-03-20T18:42:10Z', upvotes: 4, is_inherited: false }],
+    });
+    const result = await client().redditCrypto.mentions('BTC', { days: 7, limit: 10, includeInherited: true });
+    expect(requestUrl().pathname).toBe('/reddit/crypto/v1/token/BTC/mentions');
+    expect(requestParams().include_inherited).toBe('true');
+    expect(result.results[0].text_snippet).toBe('BTC range');
+  });
+
+  it('compares crypto symbols and exposes stats', async () => {
+    mockFetch(200, { period_days: 7, tokens: [] });
+    await client().crypto.compare(['BTC', 'ETH'], { days: 7 });
+    expect(requestUrl().pathname).toBe('/reddit/crypto/v1/compare');
+    expect(requestParams().symbols).toBe('BTC,ETH');
+
+    mockFetch(200, { total_mentions: 1, unique_tokens: 1, tokens: ['BTC'], supported_tokens: 10 });
+    const stats = await client().crypto.stats();
+    expect(requestUrl().pathname).toBe('/reddit/crypto/v1/stats');
+    expect(stats.tokens).toEqual(['BTC']);
   });
 });
 
