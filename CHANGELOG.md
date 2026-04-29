@@ -5,6 +5,13 @@ All notable changes to the Adanos TypeScript SDK will be documented in this file
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+## [2.1.0] - 2026-04-29
+
+### Added
+- Added raw `mentions()` helpers for Reddit Stocks, News Stocks, X/Twitter Stocks, Polymarket Stocks, and Reddit Crypto.
+- Added the Reddit Crypto namespace with trending, token, mentions, search, compare, market sentiment, stats, and health helpers.
+- Added missing stock-platform `stats()` and `health()` helpers.
+
 ## [2.0.0] - 2026-04-20
 
 ### Breaking
