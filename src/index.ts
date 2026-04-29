@@ -69,6 +69,15 @@ export type CompareOptions = StockOptions;
 export type SearchOptions = Pick<TrendingGroupOptions, 'days' | 'limit'>;
 export type MarketSentimentOptions = Pick<TrendingGroupOptions, 'days'>;
 
+export interface RawMentionsOptions {
+  /** Time period in days. */
+  days?: number;
+  /** Max raw rows to return. */
+  limit?: number;
+  /** Include inherited Reddit thread context where supported. */
+  includeInherited?: boolean;
+}
+
 export interface NewsSourceOptions {
   /** Optional strict source filter (canonical source id or known alias). */
   source?: string;
@@ -251,6 +260,26 @@ export interface RedditMarketSentiment {
   drivers: MarketSentimentDriver[];
 }
 
+export interface RedditRawMentionItem {
+  post_id?: string | null;
+  comment_id?: string | null;
+  subreddit?: string | null;
+  author?: string | null;
+  text_snippet: string;
+  created_utc: string;
+  upvotes: number;
+  sentiment_score?: number | null;
+  sentiment_label?: string | null;
+  is_inherited: boolean;
+}
+
+export interface RedditRawMentionsResponse {
+  ticker: string;
+  period_days: number;
+  count: number;
+  results: RedditRawMentionItem[];
+}
+
 interface TrendingGroupBase {
   buzz_score: number;
   trend: 'rising' | 'falling' | 'stable';
@@ -397,6 +426,26 @@ export interface NewsMarketSentiment {
   drivers: MarketSentimentDriver[];
 }
 
+export interface NewsRawMentionItem {
+  article_id?: string | null;
+  source: string;
+  url?: string | null;
+  title?: string | null;
+  summary?: string | null;
+  text_snippet: string;
+  author?: string | null;
+  created_utc?: string | null;
+  sentiment_score?: number | null;
+  sentiment_label?: string | null;
+}
+
+export interface NewsRawMentionsResponse {
+  ticker: string;
+  period_days: number;
+  count: number;
+  results: NewsRawMentionItem[];
+}
+
 // X/Twitter response types
 
 export interface XTrendingStock {
@@ -515,6 +564,27 @@ export interface XMarketSentiment {
   bearish_pct: number;
   trend_history: number[];
   drivers: MarketSentimentDriver[];
+}
+
+export interface XRawMentionItem {
+  tweet_id: string;
+  author?: string | null;
+  text_snippet: string;
+  created_utc?: string | null;
+  likes: number;
+  retweets: number;
+  views?: number | null;
+  is_reply: boolean;
+  parent_tweet_id?: string | null;
+  sentiment_score?: number | null;
+  sentiment_label?: string | null;
+}
+
+export interface XRawMentionsResponse {
+  ticker: string;
+  period_days: number;
+  count: number;
+  results: XRawMentionItem[];
 }
 
 // Polymarket response types
@@ -673,6 +743,133 @@ export interface PolymarketSearchResponse {
   results: PolymarketSearchResultItem[];
 }
 
+export interface PolymarketRawMentionItem {
+  condition_id: string;
+  event_id: string;
+  market_slug?: string | null;
+  question: string;
+  market_type: string;
+  strike_price?: number | null;
+  yes_price?: number | null;
+  no_price?: number | null;
+  reference_price?: number | null;
+  reference_price_timestamp?: string | null;
+  liquidity: number;
+  volume_24h: number;
+  trade_count: number;
+  buy_trades: number;
+  sell_trades: number;
+  unique_traders: number;
+  sentiment_score?: number | null;
+  sentiment_label?: string | null;
+  end_date?: string | null;
+  active: boolean;
+  fetched_at: string;
+}
+
+export interface PolymarketRawMentionsResponse {
+  ticker: string;
+  period_days: number;
+  count: number;
+  results: PolymarketRawMentionItem[];
+}
+
+// Reddit crypto response types
+
+export interface CryptoTrendingToken {
+  symbol: string;
+  name?: string | null;
+  buzz_score: number;
+  trend: 'rising' | 'falling' | 'stable';
+  mentions: number;
+  unique_posts: number;
+  subreddit_count: number;
+  sentiment_score?: number | null;
+  bullish_pct?: number | null;
+  bearish_pct?: number | null;
+  total_upvotes: number;
+  trend_history?: number[];
+}
+
+export interface CryptoTokenSentiment {
+  symbol: string;
+  name?: string | null;
+  found: boolean;
+  buzz_score?: number | null;
+  mentions?: number | null;
+  sentiment_score?: number | null;
+  positive_count?: number | null;
+  negative_count?: number | null;
+  neutral_count?: number | null;
+  total_upvotes?: number | null;
+  unique_posts?: number | null;
+  subreddit_count?: number | null;
+  trend?: 'rising' | 'falling' | 'stable' | null;
+  bullish_pct?: number | null;
+  bearish_pct?: number | null;
+  period_days?: number | null;
+  top_subreddits?: SubredditCount[] | null;
+  daily_trend?: DailyTrendItem[] | null;
+  top_mentions?: TopMention[] | null;
+}
+
+export interface CryptoSearchItem {
+  symbol: string;
+  name: string;
+  aliases?: string[] | null;
+  summary: StockSearchSummary;
+}
+
+export interface CryptoSearchResponse {
+  query: string;
+  count: number;
+  period_days: number;
+  results: CryptoSearchItem[];
+}
+
+export interface CryptoCompareTokenItem extends CryptoTokenSentiment {
+  trend_history?: number[];
+}
+
+export interface CryptoCompareResponse {
+  period_days: number;
+  tokens: CryptoCompareTokenItem[];
+}
+
+export interface CryptoRawMentionItem extends RedditRawMentionItem {}
+
+export interface CryptoRawMentionsResponse {
+  symbol: string;
+  period_days: number;
+  count: number;
+  results: CryptoRawMentionItem[];
+}
+
+export interface CryptoMarketSentiment {
+  buzz_score: number;
+  trend?: 'rising' | 'falling' | 'stable' | null;
+  mentions: number;
+  unique_posts: number;
+  subreddit_count: number;
+  total_upvotes: number;
+  active_tokens: number;
+  sentiment_score?: number | null;
+  positive_count: number;
+  negative_count: number;
+  neutral_count: number;
+  bullish_pct: number;
+  bearish_pct: number;
+  trend_history: number[];
+  drivers: Array<{ symbol: string; buzz_score: number; sentiment_score?: number | null; mentions: number }>;
+}
+
+export interface CryptoStatsResponse {
+  total_mentions: number;
+  unique_tokens: number;
+  tokens: string[];
+  supported_tokens: number;
+}
+
 // ── Internal HTTP client ────────────────────────────────────────────
 
 type QueryParams = Record<string, string | number | undefined>;
@@ -780,6 +977,15 @@ export class RedditNamespace extends PlatformNamespace {
     });
   }
 
+  /** Get raw Reddit mentions for a specific stock ticker. */
+  async mentions(ticker: string, options: RawMentionsOptions = {}): Promise<RedditRawMentionsResponse> {
+    return this.request(`/stock/${encodeURIComponent(ticker)}/mentions`, {
+      days: options.days,
+      limit: options.limit,
+      include_inherited: options.includeInherited?.toString(),
+    });
+  }
+
   /** Get AI-generated explanation for a stock's trend. */
   async explain(ticker: string): Promise<StockExplanationResponse> {
     return this.request(`/stock/${encodeURIComponent(ticker)}/explain`);
@@ -807,6 +1013,16 @@ export class RedditNamespace extends PlatformNamespace {
     return this.request('/market-sentiment', {
       days: options.days,
     });
+  }
+
+  /** Get Reddit stock data statistics. */
+  async stats(): Promise<StatsResponse> {
+    return this.request('/stats');
+  }
+
+  /** Get public Reddit stock service health. */
+  async health(): Promise<HealthResponse> {
+    return this.request('/health');
   }
 }
 
@@ -851,6 +1067,14 @@ export class NewsNamespace extends PlatformNamespace {
   async stock(ticker: string, options: StockOptions = {}): Promise<NewsStockSentiment> {
     return this.request(`/stock/${encodeURIComponent(ticker)}`, {
       days: options.days,
+    });
+  }
+
+  /** Get raw news mentions for a specific stock ticker. */
+  async mentions(ticker: string, options: RawMentionsOptions = {}): Promise<NewsRawMentionsResponse> {
+    return this.request(`/stock/${encodeURIComponent(ticker)}/mentions`, {
+      days: options.days,
+      limit: options.limit,
     });
   }
 
@@ -935,6 +1159,14 @@ export class XNamespace extends PlatformNamespace {
     });
   }
 
+  /** Get raw X/Twitter mentions for a specific stock ticker. */
+  async mentions(ticker: string, options: RawMentionsOptions = {}): Promise<XRawMentionsResponse> {
+    return this.request(`/stock/${encodeURIComponent(ticker)}/mentions`, {
+      days: options.days,
+      limit: options.limit,
+    });
+  }
+
   /** Get AI-generated explanation for a stock's X/Twitter trend. */
   async explain(ticker: string): Promise<StockExplanationResponse> {
     return this.request(`/stock/${encodeURIComponent(ticker)}/explain`);
@@ -962,6 +1194,16 @@ export class XNamespace extends PlatformNamespace {
     return this.request('/market-sentiment', {
       days: options.days,
     });
+  }
+
+  /** Get X/Twitter data statistics. */
+  async stats(): Promise<StatsResponse> {
+    return this.request('/stats');
+  }
+
+  /** Get public X/Twitter service health. */
+  async health(): Promise<HealthResponse> {
+    return this.request('/health');
   }
 }
 
@@ -1006,6 +1248,14 @@ export class PolymarketNamespace extends PlatformNamespace {
     });
   }
 
+  /** Get raw Polymarket snapshots for a specific stock ticker. */
+  async mentions(ticker: string, options: RawMentionsOptions = {}): Promise<PolymarketRawMentionsResponse> {
+    return this.request(`/stock/${encodeURIComponent(ticker)}/mentions`, {
+      days: options.days,
+      limit: options.limit,
+    });
+  }
+
   /** Search for stocks by name or ticker on Polymarket. */
   async search(query: string, options: SearchOptions = {}): Promise<PolymarketSearchResponse> {
     return this.request('/search', {
@@ -1029,6 +1279,82 @@ export class PolymarketNamespace extends PlatformNamespace {
       days: options.days,
     });
   }
+
+  /** Get Polymarket data statistics. */
+  async stats(): Promise<StatsResponse> {
+    return this.request('/stats');
+  }
+
+  /** Get public Polymarket service health. */
+  async health(): Promise<HealthResponse> {
+    return this.request('/health');
+  }
+}
+
+export class RedditCryptoNamespace extends PlatformNamespace {
+  /** @internal */
+  constructor(http: HttpClient) {
+    super(http, '/reddit/crypto/v1');
+  }
+
+  /** Get trending crypto tokens on Reddit. */
+  async trending(options: TrendingGroupOptions = {}): Promise<CryptoTrendingToken[]> {
+    return this.request('/trending', {
+      days: options.days,
+      limit: options.limit,
+      offset: options.offset,
+    });
+  }
+
+  /** Get sentiment for a specific crypto token. */
+  async token(symbol: string, options: StockOptions = {}): Promise<CryptoTokenSentiment> {
+    return this.request(`/token/${encodeURIComponent(symbol)}`, {
+      days: options.days,
+    });
+  }
+
+  /** Get raw Reddit mentions for a specific crypto token. */
+  async mentions(symbol: string, options: RawMentionsOptions = {}): Promise<CryptoRawMentionsResponse> {
+    return this.request(`/token/${encodeURIComponent(symbol)}/mentions`, {
+      days: options.days,
+      limit: options.limit,
+      include_inherited: options.includeInherited?.toString(),
+    });
+  }
+
+  /** Search crypto tokens by symbol, name, or alias. */
+  async search(query: string, options: SearchOptions = {}): Promise<CryptoSearchResponse> {
+    return this.request('/search', {
+      q: query,
+      days: options.days,
+      limit: options.limit,
+    });
+  }
+
+  /** Compare multiple crypto tokens side-by-side. */
+  async compare(symbols: string[], options: CompareOptions = {}): Promise<CryptoCompareResponse> {
+    return this.request('/compare', {
+      symbols: symbols.join(','),
+      days: options.days,
+    });
+  }
+
+  /** Get the service-level Reddit Crypto market sentiment snapshot. */
+  async marketSentiment(options: MarketSentimentOptions = {}): Promise<CryptoMarketSentiment> {
+    return this.request('/market-sentiment', {
+      days: options.days,
+    });
+  }
+
+  /** Get Reddit crypto data statistics. */
+  async stats(): Promise<CryptoStatsResponse> {
+    return this.request('/stats');
+  }
+
+  /** Get public Reddit crypto service health. */
+  async health(): Promise<HealthResponse> {
+    return this.request('/health');
+  }
 }
 
 // ── Client ──────────────────────────────────────────────────────────
@@ -1036,6 +1362,8 @@ export class PolymarketNamespace extends PlatformNamespace {
 export class AdanosClient {
   readonly news: NewsNamespace;
   readonly reddit: RedditNamespace;
+  readonly crypto: RedditCryptoNamespace;
+  readonly redditCrypto: RedditCryptoNamespace;
   readonly x: XNamespace;
   readonly polymarket: PolymarketNamespace;
 
@@ -1053,6 +1381,8 @@ export class AdanosClient {
 
     this.news = new NewsNamespace(http);
     this.reddit = new RedditNamespace(http);
+    this.crypto = new RedditCryptoNamespace(http);
+    this.redditCrypto = this.crypto;
     this.x = new XNamespace(http);
     this.polymarket = new PolymarketNamespace(http);
   }
