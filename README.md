@@ -9,6 +9,7 @@ It gives you typed access to:
 - News sentiment and source-filtered rankings
 - X/Twitter stock sentiment
 - Polymarket stock activity and market attention
+- Reddit crypto token sentiment
 
 Links:
 - Source: https://github.com/adanos-software/adanos-ts-sdk
@@ -37,16 +38,20 @@ const client = new AdanosClient({ apiKey: "adanos_api_key_here" });
 const trending = await client.reddit.trending({ days: 7, limit: 10 });
 const tsla = await client.reddit.stock("TSLA", { days: 14 });
 const explanation = await client.reddit.explain("TSLA");
+const health = await client.health();
 
 console.log(trending[0].ticker);
 console.log(tsla.buzz_score);
 console.log(explanation.explanation);
+console.log(health.summary.healthy);
 ```
 
 ## What You Can Do
 
 - Rank trending stocks across Reddit, News, X, and Polymarket
+- Track Reddit crypto token sentiment and raw mention rows
 - Pull service-level market sentiment snapshots across every stock namespace
+- Check aggregate API health and per-service health/statistics
 - Pull detailed ticker reports for a configurable lookback window
 - Search and compare tickers across datasets
 - Generate AI-written explanations for Reddit and News stock trends
@@ -58,6 +63,9 @@ console.log(explanation.explanation);
 - `client.news.*` for News Stocks
 - `client.x.*` for X/Twitter Stocks
 - `client.polymarket.*` for Polymarket Stocks
+- `client.crypto.*` for Reddit Crypto
+- `client.redditCrypto.*` is an alias for `client.crypto.*`
+- `client.health()` for aggregate API health
 
 ## Examples
 
@@ -112,6 +120,8 @@ const explanation = await client.x.explain("NVDA");
 const results = await client.x.search("Nvidia", { days: 7, limit: 10 });
 const comparison = await client.x.compare(["NVDA", "AMD"], { days: 7 });
 const market = await client.x.marketSentiment({ days: 7 });
+const stats = await client.x.stats();
+const health = await client.x.health();
 ```
 
 ### Polymarket
@@ -128,14 +138,40 @@ const aapl = await client.polymarket.stock("AAPL");
 const results = await client.polymarket.search("Apple", { days: 7, limit: 10 });
 const comparison = await client.polymarket.compare(["AAPL", "TSLA"], { days: 7 });
 const market = await client.polymarket.marketSentiment({ days: 7 });
+const stats = await client.polymarket.stats();
+const health = await client.polymarket.health();
+```
+
+### Reddit Crypto
+
+```typescript
+import { AdanosClient } from "finance-sentiment";
+
+const client = new AdanosClient({ apiKey: "adanos_api_key_here" });
+
+const trending = await client.crypto.trending({ days: 7, limit: 20 });
+const btc = await client.crypto.token("BTC", { days: 14 });
+const mentions = await client.crypto.mentions("BTC", { days: 7, limit: 10, offset: 10 });
+const results = await client.crypto.search("bitcoin", { days: 7, limit: 10 });
+const comparison = await client.crypto.compare(["BTC", "ETH"], { days: 7 });
+const market = await client.crypto.marketSentiment({ days: 7 });
+const stats = await client.crypto.stats();
+const health = await client.crypto.health();
 ```
 
 Polymarket semantics:
 - `buzz_score` is activity-first and optimized for current market attention
 - `total_liquidity` is a windowed signal over the selected `days`
+- `current_market_count` is the live-only active-market breadth; `market_count` remains the selected-window breadth
 - `top_mentions` on `stock()` are relevance-sorted by trading activity first
 
 ## Available Methods
+
+### `client`
+
+| Method | Description |
+|--------|-------------|
+| `health()` | Aggregate API health across all public market sentiment services |
 
 ### `client.reddit.*`
 
@@ -145,6 +181,7 @@ Polymarket semantics:
 | `trendingSectors({ days, limit, offset })` | Trending sectors |
 | `trendingCountries({ days, limit, offset })` | Trending countries |
 | `stock(ticker, { days })` | Detailed sentiment for a ticker |
+| `mentions(ticker, { days, limit, offset, includeInherited })` | Raw Reddit mention rows |
 | `explain(ticker)` | AI-generated trend explanation |
 | `search(query, { days, limit })` | Search stocks by name or ticker with recent-period summaries |
 | `compare(tickers, { days })` | Compare up to 10 stocks |
@@ -160,6 +197,7 @@ Polymarket semantics:
 | `trendingSectors({ days, limit, offset, source })` | Trending sectors from news |
 | `trendingCountries({ days, limit, offset, source })` | Trending countries from news |
 | `stock(ticker, { days })` | Detailed news sentiment for a ticker |
+| `mentions(ticker, { days, limit, offset })` | Raw news mention rows |
 | `explain(ticker)` | AI-generated explanation from news context |
 | `search(query, { days, limit })` | Search stocks in the news dataset with recent-period summaries |
 | `compare(tickers, { days })` | Compare up to 10 stocks in news |
@@ -175,6 +213,7 @@ Polymarket semantics:
 | `trendingSectors({ days, limit, offset })` | Trending sectors |
 | `trendingCountries({ days, limit, offset })` | Trending countries |
 | `stock(ticker, { days })` | Detailed X/Twitter sentiment |
+| `mentions(ticker, { days, limit, offset })` | Raw X/Twitter mention rows |
 | `explain(ticker)` | AI-generated explanation from X/Twitter context |
 | `search(query, { days, limit })` | Search stocks with recent-period summaries |
 | `compare(tickers, { days })` | Compare stocks |
@@ -190,9 +229,23 @@ Polymarket semantics:
 | `trendingSectors({ days, limit, offset })` | Trending sectors |
 | `trendingCountries({ days, limit, offset })` | Trending countries |
 | `stock(ticker, { days })` | Detailed Polymarket activity, sentiment, and relevance-sorted market questions |
+| `mentions(ticker, { days, limit, offset })` | Raw Polymarket market snapshots |
 | `search(query, { days, limit })` | Search stocks with recent-period summaries |
 | `compare(tickers, { days })` | Compare stocks with windowed Polymarket activity signals |
 | `marketSentiment({ days })` | Service-level Polymarket market sentiment snapshot |
+| `stats()` | Dataset statistics |
+| `health()` | Public service health |
+
+### `client.crypto.*`
+
+| Method | Description |
+|--------|-------------|
+| `trending({ days, limit, offset })` | Trending Reddit crypto tokens |
+| `token(symbol, { days })` | Detailed token sentiment and buzz |
+| `mentions(symbol, { days, limit, offset, includeInherited })` | Raw Reddit crypto mention rows |
+| `search(query, { days, limit })` | Search tokens by symbol or name with recent-period summaries and market cap metadata |
+| `compare(symbols, { days })` | Compare multiple tokens |
+| `marketSentiment({ days })` | Service-level Reddit Crypto market sentiment snapshot |
 | `stats()` | Dataset statistics |
 | `health()` | Public service health |
 
