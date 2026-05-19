@@ -5,6 +5,15 @@ All notable changes to the Adanos TypeScript SDK will be documented in this file
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+## [2.2.0] - 2026-05-19
+
+### Added
+- Synced typed client coverage with Adanos Market Sentiment API `1.34.0`.
+- Added `client.health()` for root API health.
+- Added raw mention `offset` support across Reddit Stocks, News Stocks, X/Twitter Stocks, Polymarket Stocks, and Reddit Crypto.
+- Added typed Polymarket `current_market_count` live active-market breadth fields.
+- Added stricter X/Twitter compare/search, platform stats/health, and Reddit Crypto response types.
+
 ## [2.1.0] - 2026-04-29
 
 ### Added
