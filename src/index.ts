@@ -8,7 +8,7 @@
  * import { AdanosClient } from 'finance-sentiment';
  *
  * const client = new AdanosClient({ apiKey: 'adanos_api_key_here' });
- * const trending = await client.reddit.trending({ days: 7 });
+ * const trending = await client.reddit.trending({ limit: 10 });
  * ```
  */
 
@@ -43,7 +43,11 @@ export interface ClientOptions {
 }
 
 export interface TrendingOptions {
-  /** Time period in days (1-90). Free tier limited to 30. */
+  /** Inclusive UTC start date (`YYYY-MM-DD`). Recommended for explicit periods. */
+  from?: string;
+  /** Inclusive UTC end date (`YYYY-MM-DD`). Recommended for explicit periods. */
+  to?: string;
+  /** Legacy period shorthand in days. Do not combine with both `from` and `to`. */
   days?: number;
   /** Max results (1-100). Default: 20. */
   limit?: number;
@@ -54,23 +58,34 @@ export interface TrendingOptions {
 }
 
 export interface TrendingGroupOptions {
+  from?: string;
+  to?: string;
+  /** Legacy period shorthand in days. Do not combine with both `from` and `to`. */
   days?: number;
   limit?: number;
   offset?: number;
 }
 
 export interface StockOptions {
-  /** Time period in days (1-90). Default: 7. */
+  /** Inclusive UTC start date (`YYYY-MM-DD`). Recommended for explicit periods. */
+  from?: string;
+  /** Inclusive UTC end date (`YYYY-MM-DD`). Recommended for explicit periods. */
+  to?: string;
+  /** Legacy period shorthand in days. Do not combine with both `from` and `to`. */
   days?: number;
 }
 
 /** Alias — compare accepts the same options as a single-stock lookup. */
 export type CompareOptions = StockOptions;
-export type SearchOptions = Pick<TrendingGroupOptions, 'days' | 'limit'>;
-export type MarketSentimentOptions = Pick<TrendingGroupOptions, 'days'>;
+export type SearchOptions = Pick<TrendingGroupOptions, 'from' | 'to' | 'days' | 'limit'>;
+export type MarketSentimentOptions = Pick<TrendingGroupOptions, 'from' | 'to' | 'days'>;
 
 export interface RawMentionsOptions {
-  /** Time period in days. */
+  /** Inclusive UTC start date (`YYYY-MM-DD`). Recommended for raw mention windows. */
+  from?: string;
+  /** Inclusive UTC end date (`YYYY-MM-DD`). Recommended for raw mention windows. */
+  to?: string;
+  /** Legacy period shorthand in days. Do not combine with both `from` and `to`. */
   days?: number;
   /** Max raw rows to return. */
   limit?: number;
@@ -245,15 +260,11 @@ export interface StatsResponse {
   unique_tickers: number;
   mentions_today?: number;
   unique_tickers_today?: number;
-  tickers?: string[];
   supported_tickers: number;
 }
 
 export type RedditStatsResponse = StatsResponse;
-
-export interface NewsStatsResponse extends StatsResponse {
-  tickers: string[];
-}
+export type NewsStatsResponse = StatsResponse;
 
 export interface StockSearchSummary {
   mentions: number;
@@ -676,15 +687,7 @@ export interface XRawMentionsResponse {
   results: XRawMentionItem[];
 }
 
-export interface XStatsResponse {
-  total_appearances?: number;
-  unique_tickers?: number;
-  mentions_today?: number;
-  unique_tickers_today?: number;
-  tickers?: string[];
-  supported_tickers?: number;
-  last_fetch?: string | null;
-}
+export type XStatsResponse = StatsResponse;
 
 // Polymarket response types
 
@@ -883,9 +886,8 @@ export interface PolymarketStatsResponse {
   total_trades: number;
   total_markets: number;
   unique_tickers: number;
-  mentions_today?: number;
+  trades_today?: number;
   unique_tickers_today?: number;
-  tickers: string[];
   supported_tickers: number;
 }
 
@@ -1036,13 +1038,26 @@ export interface CryptoStatsResponse {
   unique_tokens: number;
   mentions_today?: number;
   unique_tokens_today?: number;
-  tokens: string[];
   supported_tokens: number;
 }
 
 // ── Internal HTTP client ────────────────────────────────────────────
 
 type QueryParams = Record<string, string | number | undefined>;
+
+type PeriodOptions = {
+  from?: string;
+  to?: string;
+  days?: number;
+};
+
+function periodParams(options: PeriodOptions): QueryParams {
+  return {
+    from: options.from,
+    to: options.to,
+    days: options.days,
+  };
+}
 
 class HttpClient {
   private baseUrl: string;
@@ -1115,7 +1130,7 @@ export class RedditNamespace extends PlatformNamespace {
   /** Get trending stocks on Reddit. */
   async trending(options: TrendingOptions = {}): Promise<TrendingStock[]> {
     return this.request('/trending', {
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
       offset: options.offset,
       type: options.type,
@@ -1125,7 +1140,7 @@ export class RedditNamespace extends PlatformNamespace {
   /** Get trending sectors on Reddit. */
   async trendingSectors(options: TrendingGroupOptions = {}): Promise<TrendingSector[]> {
     return this.request('/trending/sectors', {
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
       offset: options.offset,
     });
@@ -1134,7 +1149,7 @@ export class RedditNamespace extends PlatformNamespace {
   /** Get trending countries on Reddit. */
   async trendingCountries(options: TrendingGroupOptions = {}): Promise<TrendingCountry[]> {
     return this.request('/trending/countries', {
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
       offset: options.offset,
     });
@@ -1143,14 +1158,14 @@ export class RedditNamespace extends PlatformNamespace {
   /** Get sentiment for a specific stock ticker. */
   async stock(ticker: string, options: StockOptions = {}): Promise<StockSentiment> {
     return this.request(`/stock/${encodeURIComponent(ticker)}`, {
-      days: options.days,
+      ...periodParams(options),
     });
   }
 
   /** Get raw Reddit mentions for a specific stock ticker. */
   async mentions(ticker: string, options: RawMentionsOptions = {}): Promise<RedditRawMentionsResponse> {
     return this.request(`/stock/${encodeURIComponent(ticker)}/mentions`, {
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
       offset: options.offset,
       include_inherited: options.includeInherited?.toString(),
@@ -1166,7 +1181,7 @@ export class RedditNamespace extends PlatformNamespace {
   async search(query: string, options: SearchOptions = {}): Promise<SearchResponse> {
     return this.request('/search', {
       q: query,
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
     });
   }
@@ -1175,14 +1190,14 @@ export class RedditNamespace extends PlatformNamespace {
   async compare(tickers: string[], options: CompareOptions = {}): Promise<CompareResponse> {
     return this.request('/compare', {
       tickers: tickers.join(','),
-      days: options.days,
+      ...periodParams(options),
     });
   }
 
   /** Get the service-level Reddit market sentiment snapshot. */
   async marketSentiment(options: MarketSentimentOptions = {}): Promise<RedditMarketSentiment> {
     return this.request('/market-sentiment', {
-      days: options.days,
+      ...periodParams(options),
     });
   }
 
@@ -1206,7 +1221,7 @@ export class NewsNamespace extends PlatformNamespace {
   /** Get trending stocks from news. */
   async trending(options: NewsTrendingOptions = {}): Promise<NewsTrendingStock[]> {
     return this.request('/trending', {
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
       offset: options.offset,
       type: options.type,
@@ -1217,7 +1232,7 @@ export class NewsNamespace extends PlatformNamespace {
   /** Get trending sectors from news. */
   async trendingSectors(options: NewsTrendingGroupOptions = {}): Promise<NewsTrendingSector[]> {
     return this.request('/trending/sectors', {
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
       offset: options.offset,
       source: options.source,
@@ -1227,7 +1242,7 @@ export class NewsNamespace extends PlatformNamespace {
   /** Get trending countries from news. */
   async trendingCountries(options: NewsTrendingGroupOptions = {}): Promise<NewsTrendingCountry[]> {
     return this.request('/trending/countries', {
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
       offset: options.offset,
       source: options.source,
@@ -1237,14 +1252,14 @@ export class NewsNamespace extends PlatformNamespace {
   /** Get sentiment for a specific stock ticker from news. */
   async stock(ticker: string, options: StockOptions = {}): Promise<NewsStockSentiment> {
     return this.request(`/stock/${encodeURIComponent(ticker)}`, {
-      days: options.days,
+      ...periodParams(options),
     });
   }
 
   /** Get raw news mentions for a specific stock ticker. */
   async mentions(ticker: string, options: RawMentionsOptions = {}): Promise<NewsRawMentionsResponse> {
     return this.request(`/stock/${encodeURIComponent(ticker)}/mentions`, {
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
       offset: options.offset,
     });
@@ -1259,7 +1274,7 @@ export class NewsNamespace extends PlatformNamespace {
   async search(query: string, options: SearchOptions = {}): Promise<SearchResponse<NewsSearchResultItem>> {
     return this.request('/search', {
       q: query,
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
     });
   }
@@ -1268,14 +1283,14 @@ export class NewsNamespace extends PlatformNamespace {
   async compare(tickers: string[], options: CompareOptions = {}): Promise<NewsCompareResponse> {
     return this.request('/compare', {
       tickers: tickers.join(','),
-      days: options.days,
+      ...periodParams(options),
     });
   }
 
   /** Get the service-level News market sentiment snapshot. */
   async marketSentiment(options: MarketSentimentOptions = {}): Promise<NewsMarketSentiment> {
     return this.request('/market-sentiment', {
-      days: options.days,
+      ...periodParams(options),
     });
   }
 
@@ -1299,7 +1314,7 @@ export class XNamespace extends PlatformNamespace {
   /** Get trending stocks on X/Twitter. */
   async trending(options: TrendingOptions = {}): Promise<XTrendingStock[]> {
     return this.request('/trending', {
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
       offset: options.offset,
       type: options.type,
@@ -1309,7 +1324,7 @@ export class XNamespace extends PlatformNamespace {
   /** Get trending sectors on X/Twitter. */
   async trendingSectors(options: TrendingGroupOptions = {}): Promise<XTrendingSector[]> {
     return this.request('/trending/sectors', {
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
       offset: options.offset,
     });
@@ -1318,7 +1333,7 @@ export class XNamespace extends PlatformNamespace {
   /** Get trending countries on X/Twitter. */
   async trendingCountries(options: TrendingGroupOptions = {}): Promise<XTrendingCountry[]> {
     return this.request('/trending/countries', {
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
       offset: options.offset,
     });
@@ -1327,14 +1342,14 @@ export class XNamespace extends PlatformNamespace {
   /** Get X/Twitter sentiment for a specific stock ticker. */
   async stock(ticker: string, options: StockOptions = {}): Promise<XStockDetail> {
     return this.request(`/stock/${encodeURIComponent(ticker)}`, {
-      days: options.days,
+      ...periodParams(options),
     });
   }
 
   /** Get raw X/Twitter mentions for a specific stock ticker. */
   async mentions(ticker: string, options: RawMentionsOptions = {}): Promise<XRawMentionsResponse> {
     return this.request(`/stock/${encodeURIComponent(ticker)}/mentions`, {
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
       offset: options.offset,
     });
@@ -1349,7 +1364,7 @@ export class XNamespace extends PlatformNamespace {
   async search(query: string, options: SearchOptions = {}): Promise<XSearchResponse> {
     return this.request('/search', {
       q: query,
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
     });
   }
@@ -1358,14 +1373,14 @@ export class XNamespace extends PlatformNamespace {
   async compare(tickers: string[], options: CompareOptions = {}): Promise<XCompareResponse> {
     return this.request('/compare', {
       tickers: tickers.join(','),
-      days: options.days,
+      ...periodParams(options),
     });
   }
 
   /** Get the service-level X/Twitter market sentiment snapshot. */
   async marketSentiment(options: MarketSentimentOptions = {}): Promise<XMarketSentiment> {
     return this.request('/market-sentiment', {
-      days: options.days,
+      ...periodParams(options),
     });
   }
 
@@ -1389,7 +1404,7 @@ export class PolymarketNamespace extends PlatformNamespace {
   /** Get trending stocks on Polymarket. */
   async trending(options: TrendingOptions = {}): Promise<PolymarketTrendingStock[]> {
     return this.request('/trending', {
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
       offset: options.offset,
       type: options.type,
@@ -1399,7 +1414,7 @@ export class PolymarketNamespace extends PlatformNamespace {
   /** Get trending sectors on Polymarket. */
   async trendingSectors(options: TrendingGroupOptions = {}): Promise<PolymarketTrendingSector[]> {
     return this.request('/trending/sectors', {
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
       offset: options.offset,
     });
@@ -1408,7 +1423,7 @@ export class PolymarketNamespace extends PlatformNamespace {
   /** Get trending countries on Polymarket. */
   async trendingCountries(options: TrendingGroupOptions = {}): Promise<PolymarketTrendingCountry[]> {
     return this.request('/trending/countries', {
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
       offset: options.offset,
     });
@@ -1417,14 +1432,14 @@ export class PolymarketNamespace extends PlatformNamespace {
   /** Get Polymarket sentiment for a specific stock ticker. */
   async stock(ticker: string, options: StockOptions = {}): Promise<PolymarketStockDetail> {
     return this.request(`/stock/${encodeURIComponent(ticker)}`, {
-      days: options.days,
+      ...periodParams(options),
     });
   }
 
   /** Get raw Polymarket snapshots for a specific stock ticker. */
   async mentions(ticker: string, options: RawMentionsOptions = {}): Promise<PolymarketRawMentionsResponse> {
     return this.request(`/stock/${encodeURIComponent(ticker)}/mentions`, {
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
       offset: options.offset,
     });
@@ -1434,7 +1449,7 @@ export class PolymarketNamespace extends PlatformNamespace {
   async search(query: string, options: SearchOptions = {}): Promise<PolymarketSearchResponse> {
     return this.request('/search', {
       q: query,
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
     });
   }
@@ -1443,14 +1458,14 @@ export class PolymarketNamespace extends PlatformNamespace {
   async compare(tickers: string[], options: CompareOptions = {}): Promise<PolymarketCompareResponse> {
     return this.request('/compare', {
       tickers: tickers.join(','),
-      days: options.days,
+      ...periodParams(options),
     });
   }
 
   /** Get the service-level Polymarket market sentiment snapshot. */
   async marketSentiment(options: MarketSentimentOptions = {}): Promise<PolymarketMarketSentiment> {
     return this.request('/market-sentiment', {
-      days: options.days,
+      ...periodParams(options),
     });
   }
 
@@ -1474,7 +1489,7 @@ export class RedditCryptoNamespace extends PlatformNamespace {
   /** Get trending crypto tokens on Reddit. */
   async trending(options: TrendingGroupOptions = {}): Promise<CryptoTrendingToken[]> {
     return this.request('/trending', {
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
       offset: options.offset,
     });
@@ -1483,14 +1498,14 @@ export class RedditCryptoNamespace extends PlatformNamespace {
   /** Get sentiment for a specific crypto token. */
   async token(symbol: string, options: StockOptions = {}): Promise<CryptoTokenSentiment> {
     return this.request(`/token/${encodeURIComponent(symbol)}`, {
-      days: options.days,
+      ...periodParams(options),
     });
   }
 
   /** Get raw Reddit mentions for a specific crypto token. */
   async mentions(symbol: string, options: RawMentionsOptions = {}): Promise<CryptoRawMentionsResponse> {
     return this.request(`/token/${encodeURIComponent(symbol)}/mentions`, {
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
       offset: options.offset,
       include_inherited: options.includeInherited?.toString(),
@@ -1501,7 +1516,7 @@ export class RedditCryptoNamespace extends PlatformNamespace {
   async search(query: string, options: SearchOptions = {}): Promise<CryptoSearchResponse> {
     return this.request('/search', {
       q: query,
-      days: options.days,
+      ...periodParams(options),
       limit: options.limit,
     });
   }
@@ -1510,14 +1525,14 @@ export class RedditCryptoNamespace extends PlatformNamespace {
   async compare(symbols: string[], options: CompareOptions = {}): Promise<CryptoCompareResponse> {
     return this.request('/compare', {
       symbols: symbols.join(','),
-      days: options.days,
+      ...periodParams(options),
     });
   }
 
   /** Get the service-level Reddit Crypto market sentiment snapshot. */
   async marketSentiment(options: MarketSentimentOptions = {}): Promise<CryptoMarketSentiment> {
     return this.request('/market-sentiment', {
-      days: options.days,
+      ...periodParams(options),
     });
   }
 

@@ -5,6 +5,18 @@ All notable changes to the Adanos TypeScript SDK will be documented in this file
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+## [3.0.0] - 2026-05-21
+
+### Added
+- Synced typed client coverage with Adanos Market Sentiment API `1.37.0`.
+- Added `from` / `to` period options across Reddit Stocks, Reddit Crypto, X/Twitter Stocks, News Stocks, Polymarket Stocks, and raw mention helpers.
+
+### Breaking
+- Updated exported `/stats` response types for API `1.36.0` compact standardized stats payloads, including removed legacy stats fields and renamed platform-specific counters.
+
+### Changed
+- Documented `days` as a legacy v1-compatible shorthand while keeping it supported.
+
 ## [2.2.0] - 2026-05-19
 
 ### Added
