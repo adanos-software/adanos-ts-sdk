@@ -24,12 +24,14 @@ export class StockSentimentError extends Error {
 export class ApiError extends StockSentimentError {
   status: number;
   detail: string;
+  payload?: unknown;
 
-  constructor(status: number, detail: string) {
+  constructor(status: number, detail: string, payload?: unknown) {
     super(`${status}: ${detail}`);
     this.name = 'ApiError';
     this.status = status;
     this.detail = detail;
+    this.payload = payload;
   }
 }
 
@@ -1051,6 +1053,49 @@ type PeriodOptions = {
   days?: number;
 };
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function formatValidationLocation(loc: unknown): string {
+  if (Array.isArray(loc)) {
+    return loc.map(String).join('.');
+  }
+  return loc === undefined || loc === null ? '' : String(loc);
+}
+
+function formatErrorDetail(detail: unknown): string {
+  if (typeof detail === 'string' && detail.trim()) {
+    return detail.trim();
+  }
+
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item) => {
+        if (!isRecord(item)) return null;
+        const message = item.msg ?? item.message ?? item.error;
+        if (typeof message !== 'string' || !message.trim()) return null;
+        const location = formatValidationLocation(item.loc);
+        return location ? `${location}: ${message.trim()}` : message.trim();
+      })
+      .filter((message): message is string => Boolean(message));
+    if (messages.length > 0) {
+      return messages.join('; ');
+    }
+  }
+
+  if (isRecord(detail)) {
+    for (const key of ['message', 'error', 'detail']) {
+      const value = detail[key];
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim();
+      }
+    }
+  }
+
+  return JSON.stringify(detail);
+}
+
 function periodParams(options: PeriodOptions): QueryParams {
   return {
     from: options.from,
@@ -1092,13 +1137,16 @@ class HttpClient {
 
     if (!response.ok) {
       let detail: string;
+      let payload: unknown;
       try {
-        const body = await response.json();
-        detail = body.detail ?? JSON.stringify(body);
+        payload = await response.json();
+        detail = isRecord(payload) && 'detail' in payload
+          ? formatErrorDetail(payload.detail)
+          : JSON.stringify(payload);
       } catch {
         detail = response.statusText || `HTTP ${response.status}`;
       }
-      throw new ApiError(response.status, detail);
+      throw new ApiError(response.status, detail, payload);
     }
 
     return response.json() as Promise<T>;
