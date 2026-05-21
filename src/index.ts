@@ -687,13 +687,7 @@ export interface XRawMentionsResponse {
   results: XRawMentionItem[];
 }
 
-export interface XStatsResponse {
-  total_mentions: number;
-  unique_tickers: number;
-  mentions_today?: number;
-  unique_tickers_today?: number;
-  supported_tickers: number;
-}
+export type XStatsResponse = StatsResponse;
 
 // Polymarket response types
 
