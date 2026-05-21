@@ -220,10 +220,9 @@ const NEWS_TRENDING_COUNTRY = {
 const NEWS_STATS = {
   total_mentions: 1855,
   unique_tickers: 766,
-  tickers: ['NVDA', 'AAPL', 'MSFT'],
+  mentions_today: 91,
+  unique_tickers_today: 34,
   supported_tickers: 11800,
-  days_covered: 30,
-  last_updated: '2026-03-07T08:36:07Z',
 };
 
 const NEWS_HEALTH = {
@@ -330,9 +329,8 @@ const POLYMARKET_STATS = {
   total_trades: 512,
   total_markets: 93,
   unique_tickers: 31,
-  mentions_today: 14,
+  trades_today: 14,
   unique_tickers_today: 5,
-  tickers: ['AAPL', 'TSLA'],
   supported_tickers: 11800,
 };
 
@@ -513,10 +511,52 @@ describe('Reddit stock', () => {
     expect(requestParams().days).toBe('14');
   });
 
+  it('serializes explicit from/to period params', async () => {
+    mockFetch(200, STOCK_SENTIMENT);
+    await client().reddit.stock('TSLA', { from: '2026-05-01', to: '2026-05-07' });
+    expect(requestParams().from).toBe('2026-05-01');
+    expect(requestParams().to).toBe('2026-05-07');
+    expect(requestParams().days).toBeUndefined();
+  });
+
   it('encodes ticker in URL path', async () => {
     mockFetch(200, { ticker: 'BRK.B', found: true });
     await client().reddit.stock('BRK.B');
     expect(requestUrl().pathname).toBe('/reddit/stocks/v1/stock/BRK.B');
+  });
+});
+
+describe('Period params', () => {
+  it('serializes from/to across platform methods', async () => {
+    const period = { from: '2026-05-01', to: '2026-05-07' };
+
+    mockFetch(200, []);
+    await client().news.trending(period);
+    expect(requestParams().from).toBe('2026-05-01');
+    expect(requestParams().to).toBe('2026-05-07');
+
+    mockFetch(200, []);
+    await client().x.trendingSectors(period);
+    expect(requestParams().from).toBe('2026-05-01');
+    expect(requestParams().to).toBe('2026-05-07');
+
+    mockFetch(200, POLYMARKET_SEARCH_RESPONSE);
+    await client().polymarket.search('AAPL', { ...period, limit: 3 });
+    expect(requestParams().from).toBe('2026-05-01');
+    expect(requestParams().to).toBe('2026-05-07');
+
+    mockFetch(200, []);
+    await client().crypto.trending(period);
+    expect(requestParams().from).toBe('2026-05-01');
+    expect(requestParams().to).toBe('2026-05-07');
+  });
+
+  it('keeps legacy days serialization for raw mentions', async () => {
+    mockFetch(200, { ticker: 'NVDA', period_days: 7, count: 0, results: [] });
+    await client().x.mentions('NVDA', { days: 7, limit: 5 });
+    expect(requestParams().days).toBe('7');
+    expect(requestParams().from).toBeUndefined();
+    expect(requestParams().to).toBeUndefined();
   });
 });
 
@@ -905,18 +945,17 @@ describe('X market sentiment', () => {
 describe('X stats/health', () => {
   it('returns X-specific stats payload', async () => {
     mockFetch(200, {
-      total_appearances: 2847,
+      total_mentions: 2847,
       unique_tickers: 442,
       mentions_today: 91,
       unique_tickers_today: 34,
-      tickers: ['NVDA', 'TSLA'],
       supported_tickers: 11800,
-      last_fetch: '2026-05-19T08:00:00Z',
     });
     const result = await client().x.stats();
     expect(requestUrl().pathname).toBe('/x/stocks/v1/stats');
-    expect(result.total_appearances).toBe(2847);
-    expect(result.last_fetch).toBe('2026-05-19T08:00:00Z');
+    expect(result.total_mentions).toBe(2847);
+    expect('total_appearances' in result).toBe(false);
+    expect('last_fetch' in result).toBe(false);
   });
 
   it('returns X-specific health payload', async () => {
@@ -1064,6 +1103,8 @@ describe('Polymarket stats/health', () => {
     expect(requestUrl().pathname).toBe('/polymarket/stocks/v1/stats');
     expect(result.total_trades).toBe(512);
     expect(result.total_markets).toBe(93);
+    expect(result.trades_today).toBe(14);
+    expect('tickers' in result).toBe(false);
   });
 
   it('returns Polymarket-specific health payload', async () => {
@@ -1182,13 +1223,12 @@ describe('Reddit crypto', () => {
       unique_tokens: 1,
       mentions_today: 1,
       unique_tokens_today: 1,
-      tokens: ['BTC'],
       supported_tokens: 10,
     });
     const stats = await client().crypto.stats();
     expect(requestUrl().pathname).toBe('/reddit/crypto/v1/stats');
     expect(stats.mentions_today).toBe(1);
-    expect(stats.tokens).toEqual(['BTC']);
+    expect('tokens' in stats).toBe(false);
   });
 
   it('returns crypto-specific health payload', async () => {
