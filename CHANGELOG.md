@@ -5,6 +5,12 @@ All notable changes to the Adanos TypeScript SDK will be documented in this file
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+## [2.3.1] - 2026-05-21
+
+### Fixed
+- Format API 422 error details from object and validation-list payloads as readable `ApiError.detail` strings.
+- Preserve raw API error responses on `ApiError.payload` for callers that need structured error metadata.
+
 ## [2.3.0] - 2026-05-21
 
 ### Added
