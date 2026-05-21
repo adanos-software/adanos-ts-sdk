@@ -1289,6 +1289,31 @@ describe('Errors', () => {
     const err = await client().reddit.trending().catch((e) => e) as ApiError;
     expect(err.status).toBe(400);
     expect(err.detail).toBe('{"error":"Bad request","code":123}');
+    expect(err.payload).toEqual({ error: 'Bad request', code: 123 });
+  });
+
+  it('formats structured error details and preserves the raw payload', async () => {
+    mockFetch(422, { detail: { error: 'Invalid period', message: 'Use either from or days, not both.' } });
+    const err = await client().reddit.trending().catch((e) => e) as ApiError;
+    expect(err.status).toBe(422);
+    expect(err.detail).toBe('Use either from or days, not both.');
+    expect(err.message).toBe('422: Use either from or days, not both.');
+    expect(err.payload).toEqual({ detail: { error: 'Invalid period', message: 'Use either from or days, not both.' } });
+  });
+
+  it('formats validation error lists', async () => {
+    mockFetch(422, {
+      detail: [
+        {
+          loc: ['query', 'from'],
+          msg: 'Input should be a valid date',
+          type: 'date_from_datetime_parsing',
+        },
+      ],
+    });
+    const err = await client().reddit.trending().catch((e) => e) as ApiError;
+    expect(err.status).toBe(422);
+    expect(err.detail).toBe('query.from: Input should be a valid date');
   });
 
   it('propagates network errors as-is (not ApiError)', async () => {
