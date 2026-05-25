@@ -79,7 +79,7 @@ export interface StockOptions {
 
 /** Alias — compare accepts the same options as a single-stock lookup. */
 export type CompareOptions = StockOptions;
-export type SearchOptions = Pick<TrendingGroupOptions, 'from' | 'to' | 'days' | 'limit'>;
+export type SearchOptions = Pick<TrendingGroupOptions, 'limit'>;
 export type MarketSentimentOptions = Pick<TrendingGroupOptions, 'from' | 'to' | 'days'>;
 
 export interface RawMentionsOptions {
@@ -273,11 +273,6 @@ export interface StockSearchSummary {
   buzz_score: number;
   trend?: 'rising' | 'falling' | 'stable' | null;
   sentiment_score?: number | null;
-  bullish_pct?: number | null;
-  bearish_pct?: number | null;
-  unique_posts: number;
-  subreddit_count: number;
-  total_upvotes: number;
 }
 
 export interface SearchResultItem {
@@ -418,9 +413,6 @@ export interface NewsSearchSummary {
   buzz_score: number;
   trend?: 'rising' | 'falling' | 'stable' | null;
   sentiment_score?: number | null;
-  bullish_pct?: number | null;
-  bearish_pct?: number | null;
-  source_count: number;
 }
 
 export interface NewsSearchResultItem {
@@ -542,7 +534,6 @@ export interface XTrendingStock {
   bearish_pct?: number | null;
   total_upvotes?: number | null;
   unique_tweets?: number | null;
-  is_validated: boolean;
   trend_history?: number[];
 }
 
@@ -564,7 +555,6 @@ export interface XStockDetail {
   period_days?: number | null;
   daily_trend?: XDailyTrendItem[] | null;
   top_tweets?: XTopTweet[] | null;
-  is_validated: boolean;
 }
 
 export interface XDailyTrendItem {
@@ -580,10 +570,6 @@ export interface XSearchSummary {
   buzz_score: number;
   trend?: 'rising' | 'falling' | 'stable' | null;
   sentiment_score?: number | null;
-  bullish_pct?: number | null;
-  bearish_pct?: number | null;
-  unique_tweets: number;
-  total_upvotes: number;
 }
 
 export interface XSearchResultItem {
@@ -826,13 +812,7 @@ export interface PolymarketSearchSummary {
   buzz_score: number;
   trend?: 'rising' | 'falling' | 'stable' | null;
   trade_count: number;
-  market_count: number;
-  current_market_count: number;
-  unique_traders?: number | null;
   sentiment_score?: number | null;
-  bullish_pct?: number | null;
-  bearish_pct?: number | null;
-  total_liquidity: number;
 }
 
 export interface PolymarketSearchResultItem {
@@ -958,11 +938,6 @@ export interface CryptoSearchSummary {
   buzz_score: number;
   trend?: 'rising' | 'falling' | 'stable' | null;
   sentiment_score?: number | null;
-  bullish_pct?: number | null;
-  bearish_pct?: number | null;
-  unique_posts: number;
-  subreddit_count: number;
-  total_upvotes: number;
 }
 
 export interface CryptoSearchItem {
@@ -1229,7 +1204,6 @@ export class RedditNamespace extends PlatformNamespace {
   async search(query: string, options: SearchOptions = {}): Promise<SearchResponse> {
     return this.request('/search', {
       q: query,
-      ...periodParams(options),
       limit: options.limit,
     });
   }
@@ -1322,7 +1296,6 @@ export class NewsNamespace extends PlatformNamespace {
   async search(query: string, options: SearchOptions = {}): Promise<SearchResponse<NewsSearchResultItem>> {
     return this.request('/search', {
       q: query,
-      ...periodParams(options),
       limit: options.limit,
     });
   }
@@ -1412,7 +1385,6 @@ export class XNamespace extends PlatformNamespace {
   async search(query: string, options: SearchOptions = {}): Promise<XSearchResponse> {
     return this.request('/search', {
       q: query,
-      ...periodParams(options),
       limit: options.limit,
     });
   }
@@ -1497,7 +1469,6 @@ export class PolymarketNamespace extends PlatformNamespace {
   async search(query: string, options: SearchOptions = {}): Promise<PolymarketSearchResponse> {
     return this.request('/search', {
       q: query,
-      ...periodParams(options),
       limit: options.limit,
     });
   }
@@ -1564,7 +1535,6 @@ export class RedditCryptoNamespace extends PlatformNamespace {
   async search(query: string, options: SearchOptions = {}): Promise<CryptoSearchResponse> {
     return this.request('/search', {
       q: query,
-      ...periodParams(options),
       limit: options.limit,
     });
   }

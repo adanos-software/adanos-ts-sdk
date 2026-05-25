@@ -540,8 +540,8 @@ describe('Period params', () => {
     expect(requestParams().from).toBe('2026-05-01');
     expect(requestParams().to).toBe('2026-05-07');
 
-    mockFetch(200, POLYMARKET_SEARCH_RESPONSE);
-    await client().polymarket.search('AAPL', { ...period, limit: 3 });
+    mockFetch(200, POLYMARKET_MARKET_SENTIMENT);
+    await client().polymarket.marketSentiment(period);
     expect(requestParams().from).toBe('2026-05-01');
     expect(requestParams().to).toBe('2026-05-07');
 
@@ -576,9 +576,9 @@ describe('Reddit explain', () => {
 describe('Reddit search', () => {
   it('searches and passes query params', async () => {
     mockFetch(200, SEARCH_RESPONSE);
-    const result = await client().reddit.search('Tesla', { days: 14, limit: 5 });
+    const result = await client().reddit.search('Tesla', { limit: 5 });
     expect(requestParams().q).toBe('Tesla');
-    expect(requestParams().days).toBe('14');
+    expect(requestParams().days).toBeUndefined();
     expect(requestParams().limit).toBe('5');
     expect(result.count).toBe(1);
     expect(result.period_days).toBe(7);
@@ -744,19 +744,16 @@ describe('News explain/search', () => {
           buzz_score: 79.2,
           trend: 'rising',
           sentiment_score: 0.44,
-          bullish_pct: 81,
-          bearish_pct: 8,
-          source_count: 25,
         },
       }],
     });
-    const result = await client().news.search('NVIDIA', { days: 7, limit: 10 });
+    const result = await client().news.search('NVIDIA', { limit: 10 });
     expect(requestUrl().pathname).toBe('/news/stocks/v1/search');
     expect(requestParams().q).toBe('NVIDIA');
-    expect(requestParams().days).toBe('7');
+    expect(requestParams().days).toBeUndefined();
     expect(requestParams().limit).toBe('10');
     expect(requestParams().source).toBeUndefined();
-    expect(result.results[0].summary.source_count).toBe(25);
+    expect(result.results[0].summary.mentions).toBe(309);
   });
 });
 
@@ -817,6 +814,7 @@ describe('X trending', () => {
     const result = await client().x.trending();
     expect(result).toHaveLength(1);
     expect(result[0].ticker).toBe('NVDA');
+    expect('is_validated' in result[0]).toBe(false);
   });
 
   it('passes type param', async () => {
@@ -841,6 +839,7 @@ describe('X stock', () => {
     expect(result.ticker).toBe('NVDA');
     expect(result.mentions).toBe(156);
     expect('total_mentions' in result).toBe(false);
+    expect('is_validated' in result).toBe(false);
     expect(result.daily_trend?.[0].sentiment_score).toBe(0.27);
     expect('sentiment' in (result.daily_trend?.[0] ?? {})).toBe(false);
     expect(requestUrl().pathname).toBe('/x/stocks/v1/stock/NVDA');
@@ -898,18 +897,14 @@ describe('X search', () => {
           buzz_score: 72.5,
           trend: 'rising',
           sentiment_score: 0.35,
-          bullish_pct: 45,
-          bearish_pct: 12,
-          unique_tweets: 42,
-          total_upvotes: 2847,
         },
       }],
     });
-    const result = await client().x.search('NVDA', { days: 7, limit: 3 });
+    const result = await client().x.search('NVDA', { limit: 3 });
     expect(requestParams().q).toBe('NVDA');
-    expect(requestParams().days).toBe('7');
+    expect(requestParams().days).toBeUndefined();
     expect(requestParams().limit).toBe('3');
-    expect(result.results[0].summary.unique_tweets).toBe(42);
+    expect(result.results[0].summary.mentions).toBe(156);
   });
 });
 
@@ -1062,13 +1057,12 @@ describe('Polymarket raw mentions', () => {
 describe('Polymarket search', () => {
   it('searches stocks with summary payload', async () => {
     mockFetch(200, POLYMARKET_SEARCH_RESPONSE);
-    const result = await client().polymarket.search('AAPL', { days: 30, limit: 4 });
+    const result = await client().polymarket.search('AAPL', { limit: 4 });
     expect(requestParams().q).toBe('AAPL');
-    expect(requestParams().days).toBe('30');
+    expect(requestParams().days).toBeUndefined();
     expect(requestParams().limit).toBe('4');
     expect(result.count).toBe(1);
     expect(result.results[0].summary.trade_count).toBe(12);
-    expect(result.results[0].summary.current_market_count).toBe(2);
   });
 });
 
@@ -1181,11 +1175,12 @@ describe('Reddit crypto', () => {
         },
       }],
     });
-    const result = await client().crypto.search('bitcoin', { days: 7, limit: 3 });
+    const result = await client().crypto.search('bitcoin', { limit: 3 });
     expect(requestUrl().pathname).toBe('/reddit/crypto/v1/search');
     expect(requestParams().q).toBe('bitcoin');
+    expect(requestParams().days).toBeUndefined();
     expect(result.results[0].market_cap_rank).toBe(1);
-    expect(result.results[0].summary.total_upvotes).toBe(4200);
+    expect(result.results[0].summary.mentions).toBe(321);
   });
 
   it('returns crypto market sentiment with active_tickers', async () => {
