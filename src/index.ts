@@ -109,6 +109,18 @@ export type NewsCompareOptions = CompareOptions;
 
 // ── Response types (snake_case — matches API JSON exactly) ──────────
 
+export interface InvalidPeriodErrorDetail {
+  error: string;
+  message: string;
+  period_from?: string | null;
+  available_since?: string | null;
+  platform?: string | null;
+}
+
+export interface InvalidPeriodErrorResponse {
+  detail: InvalidPeriodErrorDetail;
+}
+
 // Reddit response types
 
 export interface TrendingStock {
@@ -555,6 +567,7 @@ export interface XStockDetail {
   period_days?: number | null;
   daily_trend?: XDailyTrendItem[] | null;
   top_tweets?: XTopTweet[] | null;
+  top_authors?: XTopAuthor[] | null;
 }
 
 export interface XDailyTrendItem {
@@ -613,6 +626,15 @@ export interface XTopTweet {
   views?: number | null;
   author?: string | null;
   created_at?: string | null;
+}
+
+export interface XTopAuthor {
+  author: string;
+  mentions: number;
+  sentiment_score?: number | null;
+  buzz_score?: number | null;
+  /** @deprecated Use `mentions` instead. Kept while the API still returns the alias. */
+  count: number;
 }
 
 interface XTrendingGroupBase {

@@ -118,6 +118,7 @@ const X_STOCK_DETAIL = {
   found: true,
   mentions: 156,
   daily_trend: [{ date: '2026-03-05', mentions: 21, sentiment_score: 0.27, avg_rank: 3.2, buzz_score: 56.1 }],
+  top_authors: [{ author: 'marketwatcher', mentions: 24, sentiment_score: 0.41, buzz_score: 61.8, count: 24 }],
 };
 
 const TRENDING_SECTOR = {
@@ -841,6 +842,8 @@ describe('X stock', () => {
     expect('total_mentions' in result).toBe(false);
     expect('is_validated' in result).toBe(false);
     expect(result.daily_trend?.[0].sentiment_score).toBe(0.27);
+    expect(result.top_authors?.[0].author).toBe('marketwatcher');
+    expect(result.top_authors?.[0].count).toBe(24);
     expect('sentiment' in (result.daily_trend?.[0] ?? {})).toBe(false);
     expect(requestUrl().pathname).toBe('/x/stocks/v1/stock/NVDA');
   });
