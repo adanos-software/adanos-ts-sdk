@@ -5,6 +5,13 @@ All notable changes to the Adanos TypeScript SDK will be documented in this file
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+## [2.5.0] - 2026-05-31
+
+### Added
+- Synced typed client coverage with Adanos Market Sentiment API `1.40.0`.
+- Added exported `InvalidPeriodErrorResponse` types for structured 422 period-window errors.
+- Added `XTopAuthor` and `XStockDetail.top_authors` for X/Twitter contributor metrics.
+
 ## [2.4.0] - 2026-05-25
 
 ### Changed
