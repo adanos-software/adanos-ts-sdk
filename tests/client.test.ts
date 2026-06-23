@@ -117,7 +117,7 @@ const X_STOCK_DETAIL = {
   ticker: 'NVDA',
   found: true,
   mentions: 156,
-  daily_trend: [{ date: '2026-03-05', mentions: 21, sentiment_score: 0.27, avg_rank: 3.2, buzz_score: 56.1 }],
+  daily_trend: [{ date: '2026-03-05', mentions: 21, sentiment_score: 0.27, buzz_score: 56.1 }],
   top_authors: [{ author: 'marketwatcher', mentions: 24, sentiment_score: 0.41, buzz_score: 61.8, count: 24 }],
 };
 
@@ -252,6 +252,15 @@ const POLYMARKET_STOCK_DETAIL = {
   found: true,
   current_market_count: 2,
   daily_trend: [{ date: '2026-03-05', trade_count: 5, sentiment_score: 0.22, buzz_score: 64.1 }],
+  top_mentions: [{
+    condition_id: '0xabc',
+    question: 'Will AAPL close above $220 this week?',
+    market_type: 'close_above',
+    liquidity: 7905.52,
+    volume_24h: 2408.43,
+    active: true,
+    market_status: 'tradable',
+  }],
 };
 
 const POLYMARKET_COMPARE_RESPONSE = {
@@ -330,9 +339,27 @@ const POLYMARKET_STATS = {
   total_trades: 512,
   total_markets: 93,
   unique_tickers: 31,
+  open_markets_current: 47,
+  open_tickers_current: 19,
+  traded_markets_today: 11,
+  traded_tickers_today: 5,
   trades_today: 14,
-  unique_tickers_today: 5,
   supported_tickers: 11800,
+};
+
+const SENTIMENT_ANALYZE_RESPONSE = {
+  text: 'TSLA looks like a short squeeze setup',
+  sentiment_score: 0.78,
+  sentiment_label: 'positive',
+  components: {
+    engine_version: '5.4',
+    vader_compound: 0.34,
+    roberta_score: 0.61,
+    emoji_score: 0,
+    phrase_adjustment: 0.21,
+    phrase_matches: [{ phrase: 'short squeeze', score: 3.5 }],
+    contextual_finance_matches: [],
+  },
 };
 
 const CRYPTO_MARKET_SENTIMENT = {
@@ -1024,6 +1051,7 @@ describe('Polymarket stock', () => {
     expect(result.ticker).toBe('AAPL');
     expect(result.current_market_count).toBe(2);
     expect(result.daily_trend?.[0].sentiment_score).toBe(0.22);
+    expect(result.top_mentions?.[0].market_status).toBe('tradable');
     expect(requestUrl().pathname).toBe('/polymarket/stocks/v1/stock/AAPL');
   });
 });
@@ -1046,6 +1074,7 @@ describe('Polymarket raw mentions', () => {
         sell_trades: 1,
         unique_traders: 2,
         active: true,
+        market_status: 'open',
         fetched_at: '2026-04-20T15:00:00Z',
       }],
     });
@@ -1054,6 +1083,7 @@ describe('Polymarket raw mentions', () => {
     expect(requestParams().limit).toBe('5');
     expect(requestParams().offset).toBe('10');
     expect(result.results[0].condition_id).toBe('0xabc');
+    expect(result.results[0].market_status).toBe('open');
   });
 });
 
@@ -1100,8 +1130,13 @@ describe('Polymarket stats/health', () => {
     expect(requestUrl().pathname).toBe('/polymarket/stocks/v1/stats');
     expect(result.total_trades).toBe(512);
     expect(result.total_markets).toBe(93);
+    expect(result.open_markets_current).toBe(47);
+    expect(result.open_tickers_current).toBe(19);
+    expect(result.traded_markets_today).toBe(11);
+    expect(result.traded_tickers_today).toBe(5);
     expect(result.trades_today).toBe(14);
     expect('tickers' in result).toBe(false);
+    expect('unique_tickers_today' in result).toBe(false);
   });
 
   it('returns Polymarket-specific health payload', async () => {
@@ -1115,6 +1150,35 @@ describe('Polymarket stats/health', () => {
     const result = await client().polymarket.health();
     expect(requestUrl().pathname).toBe('/polymarket/stocks/v1/health');
     expect(result.service).toBe('polymarket-stocks');
+  });
+});
+
+describe('Direct sentiment', () => {
+  it('posts text to the sentiment analyze endpoint', async () => {
+    mockFetch(200, SENTIMENT_ANALYZE_RESPONSE);
+    const result = await client().sentiment.analyze('TSLA looks like a short squeeze setup');
+    expect(requestUrl().pathname).toBe('/sentiment/v1/analyze');
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.adanos.org/sentiment/v1/analyze',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ text: 'TSLA looks like a short squeeze setup' }),
+      }),
+    );
+    expect(result.sentiment_label).toBe('positive');
+    expect(result.components.phrase_matches[0].phrase).toBe('short squeeze');
+  });
+
+  it('preserves custom baseUrl path prefixes', async () => {
+    mockFetch(200, SENTIMENT_ANALYZE_RESPONSE);
+    const proxiedClient = new AdanosClient({
+      apiKey: API_KEY,
+      baseUrl: 'https://gateway.example.com/adanos',
+    });
+
+    await proxiedClient.sentiment.analyze('TSLA looks like a short squeeze setup');
+
+    expect(requestUrl().href).toBe('https://gateway.example.com/adanos/sentiment/v1/analyze');
   });
 });
 

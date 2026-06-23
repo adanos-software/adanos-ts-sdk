@@ -5,6 +5,17 @@ All notable changes to the Adanos TypeScript SDK will be documented in this file
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+## [Unreleased]
+
+### Added
+- Added `client.sentiment.analyze()` for `POST /sentiment/v1/analyze`.
+- Added Polymarket `market_status` fields on stock detail `top_mentions[]` and raw mention rows.
+- Added Polymarket `/stats` `open_markets_current`, `open_tickers_current`, `traded_markets_today`, and `traded_tickers_today`.
+
+### Changed
+- Synced typed client coverage with Adanos Market Sentiment API `1.44.0`.
+- Removed X/Twitter `daily_trend[].avg_rank` and Polymarket `/stats.unique_tickers_today` from public response types.
+
 ## [2.5.0] - 2026-05-31
 
 ### Added

@@ -574,7 +574,6 @@ export interface XDailyTrendItem {
   date: string;
   mentions: number;
   sentiment_score?: number | null;
-  avg_rank?: number | null;
   buzz_score?: number | null;
 }
 
@@ -736,6 +735,7 @@ export interface PolymarketTopMention {
   volume_24h: number;
   end_date?: string | null;
   active: boolean;
+  market_status?: string | null;
 }
 
 export interface PolymarketStockDetail {
@@ -876,6 +876,7 @@ export interface PolymarketRawMentionItem {
   sentiment_label?: string | null;
   end_date?: string | null;
   active: boolean;
+  market_status?: string | null;
   fetched_at: string;
 }
 
@@ -890,9 +891,34 @@ export interface PolymarketStatsResponse {
   total_trades: number;
   total_markets: number;
   unique_tickers: number;
+  open_markets_current?: number;
+  open_tickers_current?: number;
+  traded_markets_today?: number;
+  traded_tickers_today?: number;
   trades_today?: number;
-  unique_tickers_today?: number;
   supported_tickers: number;
+}
+
+export interface SentimentPhraseMatch {
+  phrase: string;
+  score: number;
+}
+
+export interface SentimentComponents {
+  engine_version: string;
+  vader_compound?: number | null;
+  roberta_score?: number | null;
+  emoji_score: number;
+  phrase_adjustment: number;
+  phrase_matches: SentimentPhraseMatch[];
+  contextual_finance_matches: string[];
+}
+
+export interface SentimentAnalyzeResponse {
+  text: string;
+  sentiment_score: number;
+  sentiment_label: 'positive' | 'neutral' | 'negative';
+  components: SentimentComponents;
 }
 
 // Reddit crypto response types
@@ -1129,6 +1155,36 @@ class HttpClient {
         'X-API-Key': this.apiKey,
         'Accept': 'application/json',
       },
+      signal: AbortSignal.timeout(this.timeout),
+    });
+
+    if (!response.ok) {
+      let detail: string;
+      let payload: unknown;
+      try {
+        payload = await response.json();
+        detail = isRecord(payload) && 'detail' in payload
+          ? formatErrorDetail(payload.detail)
+          : JSON.stringify(payload);
+      } catch {
+        detail = response.statusText || `HTTP ${response.status}`;
+      }
+      throw new ApiError(response.status, detail, payload);
+    }
+
+    return response.json() as Promise<T>;
+  }
+
+  async post<T>(path: string, body: unknown): Promise<T> {
+    const url = new URL(`${this.baseUrl}${path}`);
+    const response = await fetch(url.toString(), {
+      method: 'POST',
+      headers: {
+        'X-API-Key': this.apiKey,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
       signal: AbortSignal.timeout(this.timeout),
     });
 
@@ -1587,6 +1643,20 @@ export class RedditCryptoNamespace extends PlatformNamespace {
   }
 }
 
+export class SentimentNamespace {
+  private http: HttpClient;
+
+  /** @internal */
+  constructor(http: HttpClient) {
+    this.http = http;
+  }
+
+  /** Analyze one finance or trading text with the direct Finance Sentiment API. */
+  async analyze(text: string): Promise<SentimentAnalyzeResponse> {
+    return this.http.post('/sentiment/v1/analyze', { text });
+  }
+}
+
 // ── Client ──────────────────────────────────────────────────────────
 
 export class AdanosClient {
@@ -1596,6 +1666,7 @@ export class AdanosClient {
   readonly redditCrypto: RedditCryptoNamespace;
   readonly x: XNamespace;
   readonly polymarket: PolymarketNamespace;
+  readonly sentiment: SentimentNamespace;
   private readonly http: HttpClient;
 
   /**
@@ -1617,6 +1688,7 @@ export class AdanosClient {
     this.redditCrypto = this.crypto;
     this.x = new XNamespace(http);
     this.polymarket = new PolymarketNamespace(http);
+    this.sentiment = new SentimentNamespace(http);
   }
 
   /** Get aggregate API health across all public market sentiment services. */
