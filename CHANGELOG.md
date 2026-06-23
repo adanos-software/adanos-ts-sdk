@@ -5,7 +5,7 @@ All notable changes to the Adanos TypeScript SDK will be documented in this file
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
-## [Unreleased]
+## [2.6.0] - 2026-06-23
 
 ### Added
 - Added `client.sentiment.analyze()` for `POST /sentiment/v1/analyze`.
