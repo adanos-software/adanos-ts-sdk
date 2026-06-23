@@ -1176,7 +1176,7 @@ class HttpClient {
   }
 
   async post<T>(path: string, body: unknown): Promise<T> {
-    const url = new URL(path, this.baseUrl);
+    const url = new URL(`${this.baseUrl}${path}`);
     const response = await fetch(url.toString(), {
       method: 'POST',
       headers: {

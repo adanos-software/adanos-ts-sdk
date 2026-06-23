@@ -1168,6 +1168,18 @@ describe('Direct sentiment', () => {
     expect(result.sentiment_label).toBe('positive');
     expect(result.components.phrase_matches[0].phrase).toBe('short squeeze');
   });
+
+  it('preserves custom baseUrl path prefixes', async () => {
+    mockFetch(200, SENTIMENT_ANALYZE_RESPONSE);
+    const proxiedClient = new AdanosClient({
+      apiKey: API_KEY,
+      baseUrl: 'https://gateway.example.com/adanos',
+    });
+
+    await proxiedClient.sentiment.analyze('TSLA looks like a short squeeze setup');
+
+    expect(requestUrl().href).toBe('https://gateway.example.com/adanos/sentiment/v1/analyze');
+  });
 });
 
 describe('Reddit crypto', () => {
