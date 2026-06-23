@@ -10,6 +10,7 @@ It gives you typed access to:
 - X/Twitter stock sentiment
 - Polymarket stock activity and market attention
 - Reddit crypto token sentiment
+- Direct finance text sentiment analysis
 
 Links:
 - Source: https://github.com/adanos-software/adanos-ts-sdk
@@ -39,11 +40,13 @@ const trending = await client.reddit.trending({ limit: 10 });
 const tsla = await client.reddit.stock("TSLA");
 const explanation = await client.reddit.explain("TSLA");
 const health = await client.health();
+const direct = await client.sentiment.analyze("TSLA looks like a short squeeze setup");
 
 console.log(trending[0].ticker);
 console.log(tsla.buzz_score);
 console.log(explanation.explanation);
 console.log(health.summary.healthy);
+console.log(direct.sentiment_label);
 ```
 
 ## What You Can Do
@@ -65,6 +68,7 @@ console.log(health.summary.healthy);
 - `client.polymarket.*` for Polymarket Stocks
 - `client.crypto.*` for Reddit Crypto
 - `client.redditCrypto.*` is an alias for `client.crypto.*`
+- `client.sentiment.*` for direct finance text sentiment
 - `client.health()` for aggregate API health
 
 ## Examples
@@ -250,6 +254,12 @@ Period options: use `from` and `to` as `YYYY-MM-DD` inclusive UTC dates for repr
 | `marketSentiment({ from, to, days })` | Service-level Reddit Crypto market sentiment snapshot |
 | `stats()` | Dataset statistics |
 | `health()` | Public service health |
+
+### `client.sentiment.*`
+
+| Method | Description |
+|--------|-------------|
+| `analyze(text)` | Analyze one finance or trading text. Requires a Professional account. |
 
 ## Error Handling
 
