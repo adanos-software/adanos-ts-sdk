@@ -167,7 +167,11 @@ Polymarket semantics:
 - `buzz_score` is activity-first and optimized for current market attention
 - `total_liquidity` is a windowed signal over the selected period
 - `current_market_count` is the live-only active-market breadth; `market_count` remains the selected-window breadth
-- `top_mentions` on `stock()` are relevance-sorted by trading activity first
+- `unique_traders` can be `null` when retained wallet-level trades do not fully cover the requested window
+- `pulse` on `stock()` provides a compact current interpretation; use its evidence and warnings as data-quality context
+- `top_mentions` on `stock()` are representative sentiment evidence, with directional markets prioritized
+
+Across platforms, each `trend_history` value represents its own UTC calendar day. The final value for a live window describes the current partial UTC day and is not expected to equal the top-level period `buzz_score`.
 
 ## Available Methods
 
