@@ -5,7 +5,7 @@ All notable changes to the Adanos TypeScript SDK will be documented in this file
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
-## [Unreleased]
+## [2.7.0] - 2026-08-09
 
 ### Added
 - Synced typed response coverage with Adanos Market Sentiment API `1.49.0`, including Polymarket ticker `pulse`, daily bullish/bearish percentages, and structured compare/unsupported-asset errors.
