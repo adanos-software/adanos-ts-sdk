@@ -20,7 +20,10 @@ const TRENDING_STOCK = {
 
 const STOCK_SENTIMENT = {
   ticker: 'TSLA', found: true, mentions: 342,
-  daily_trend: [{ date: '2026-03-05', mentions: 52, sentiment_score: 0.31, buzz_score: 42.8 }],
+  daily_trend: [{
+    date: '2026-03-05', mentions: 52, sentiment_score: 0.31, buzz_score: 42.8,
+    bullish_pct: 62, bearish_pct: 18,
+  }],
 };
 
 const SEARCH_RESPONSE = {
@@ -251,7 +254,10 @@ const POLYMARKET_STOCK_DETAIL = {
   ticker: 'AAPL',
   found: true,
   current_market_count: 2,
-  daily_trend: [{ date: '2026-03-05', trade_count: 5, sentiment_score: 0.22, buzz_score: 64.1 }],
+  daily_trend: [{
+    date: '2026-03-05', trade_count: 5, sentiment_score: 0.22, buzz_score: 64.1,
+    bullish_pct: 64, bearish_pct: 21,
+  }],
   top_mentions: [{
     condition_id: '0xabc',
     question: 'Will AAPL close above $220 this week?',
@@ -261,6 +267,14 @@ const POLYMARKET_STOCK_DETAIL = {
     active: true,
     market_status: 'tradable',
   }],
+  pulse: {
+    mood: 'mixed',
+    confidence: 60,
+    thin_data: false,
+    why: ['opposing_market_signals'],
+    warnings: ['high_average_spread'],
+    evidence: { directional_coverage: 1, snapshot_at: '2026-06-24T06:25:53Z' },
+  },
 };
 
 const POLYMARKET_COMPARE_RESPONSE = {
@@ -1051,7 +1065,9 @@ describe('Polymarket stock', () => {
     expect(result.ticker).toBe('AAPL');
     expect(result.current_market_count).toBe(2);
     expect(result.daily_trend?.[0].sentiment_score).toBe(0.22);
+    expect(result.daily_trend?.[0].bullish_pct).toBe(64);
     expect(result.top_mentions?.[0].market_status).toBe('tradable');
+    expect(result.pulse?.mood).toBe('mixed');
     expect(requestUrl().pathname).toBe('/polymarket/stocks/v1/stock/AAPL');
   });
 });
@@ -1361,6 +1377,28 @@ describe('Errors', () => {
     expect(err.detail).toBe('Use either from or days, not both.');
     expect(err.message).toBe('422: Use either from or days, not both.');
     expect(err.payload).toEqual({ detail: { error: 'Invalid period', message: 'Use either from or days, not both.' } });
+  });
+
+  it('exports the structured API 1.49 error contracts', () => {
+    const invalidPeriod: import('../src/index.js').InvalidPeriodErrorResponse = {
+      detail: {
+        error: 'data_unavailable',
+        message: 'Requested period predates public data.',
+        field: 'from',
+        value: '2020-01-01',
+        available_since: '2025-01-01',
+      },
+    };
+    const compareLimit: import('../src/index.js').CompareLimitErrorResponse = {
+      detail: { error: 'too_many_tickers', message: 'Too many tickers.', max_items: 10, item_name: 'ticker' },
+    };
+    const unsupported: import('../src/index.js').UnsupportedAssetErrorResponse = {
+      detail: { error_code: 'unsupported_ticker', message: 'Unsupported ticker.' },
+    };
+
+    expect(invalidPeriod.detail.available_since).toBe('2025-01-01');
+    expect(compareLimit.detail.max_items).toBe(10);
+    expect(unsupported.detail.error_code).toBe('unsupported_ticker');
   });
 
   it('formats validation error lists', async () => {

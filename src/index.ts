@@ -112,13 +112,40 @@ export type NewsCompareOptions = CompareOptions;
 export interface InvalidPeriodErrorDetail {
   error: string;
   message: string;
+  field?: string | null;
+  value?: string | number | null;
+  today?: string | null;
   period_from?: string | null;
+  period_to?: string | null;
   available_since?: string | null;
+  retention_from?: string | null;
+  requested_days?: number | null;
+  max_days?: number | null;
   platform?: string | null;
 }
 
 export interface InvalidPeriodErrorResponse {
   detail: InvalidPeriodErrorDetail;
+}
+
+export interface CompareLimitErrorDetail {
+  error: string;
+  message: string;
+  max_items: number;
+  item_name: string;
+}
+
+export interface CompareLimitErrorResponse {
+  detail: CompareLimitErrorDetail;
+}
+
+export interface UnsupportedAssetErrorDetail {
+  error_code: string;
+  message: string;
+}
+
+export interface UnsupportedAssetErrorResponse {
+  detail: UnsupportedAssetErrorDetail;
 }
 
 // Reddit response types
@@ -170,6 +197,8 @@ export interface DailyTrendItem {
   mentions: number;
   sentiment_score?: number | null;
   buzz_score?: number | null;
+  bullish_pct?: number | null;
+  bearish_pct?: number | null;
 }
 
 export interface TopMention {
@@ -538,7 +567,7 @@ export interface NewsRawMentionsResponse {
 export interface XTrendingStock {
   ticker: string;
   buzz_score: number;
-  trend: string;
+  trend: 'rising' | 'falling' | 'stable';
   mentions: number;
   company_name?: string | null;
   sentiment_score?: number | null;
@@ -575,6 +604,8 @@ export interface XDailyTrendItem {
   mentions: number;
   sentiment_score?: number | null;
   buzz_score?: number | null;
+  bullish_pct?: number | null;
+  bearish_pct?: number | null;
 }
 
 export interface XSearchSummary {
@@ -721,6 +752,25 @@ export interface PolymarketDailyTrendItem {
   trade_count: number;
   sentiment_score?: number | null;
   buzz_score?: number | null;
+  bullish_pct?: number | null;
+  bearish_pct?: number | null;
+}
+
+export interface PolymarketPulseEvidence {
+  directional_coverage?: number | null;
+  traded_market_pct?: number | null;
+  zero_trade_market_pct?: number | null;
+  avg_spread?: number | null;
+  snapshot_at?: string | null;
+}
+
+export interface PolymarketTickerPulse {
+  mood: 'bullish' | 'bearish' | 'mixed' | 'event_driven' | 'illiquid' | 'unclear';
+  confidence: number;
+  thin_data: boolean;
+  why: string[];
+  warnings?: string[];
+  evidence: PolymarketPulseEvidence;
 }
 
 export interface PolymarketTopMention {
@@ -758,6 +808,7 @@ export interface PolymarketStockDetail {
   total_liquidity?: number | null;
   daily_trend?: PolymarketDailyTrendItem[] | null;
   top_mentions?: PolymarketTopMention[] | null;
+  pulse?: PolymarketTickerPulse | null;
 }
 
 interface PolymarketTrendingGroupBase {
@@ -817,7 +868,7 @@ export interface PolymarketMarketSentiment {
   trade_count: number;
   market_count: number;
   current_market_count: number;
-  unique_traders: number;
+  unique_traders: number | null;
   total_liquidity: number;
   active_tickers: number;
   sentiment_score?: number | null;
@@ -948,6 +999,8 @@ export interface CryptoDailyTrendItem {
   mentions: number;
   sentiment_score?: number | null;
   buzz_score?: number | null;
+  bullish_pct?: number | null;
+  bearish_pct?: number | null;
 }
 
 export interface CryptoTopMention {
