@@ -97,6 +97,11 @@ export interface RawMentionsOptions {
   includeInherited?: boolean;
 }
 
+export interface SentimentAnalyzeOptions {
+  /** Company name or ticker to judge the text for. Maximum 100 characters. */
+  target?: string | null;
+}
+
 export interface NewsSourceOptions {
   /** Optional strict source filter (canonical source id or known alias). */
   source?: string;
@@ -189,6 +194,10 @@ export interface StockSentiment {
 
 export interface SubredditCount {
   subreddit: string;
+  mentions?: number;
+  sentiment_score?: number | null;
+  buzz_score?: number | null;
+  /** @deprecated Use `mentions` instead. */
   count: number;
 }
 
@@ -409,6 +418,7 @@ interface TrendingGroupBase {
   bearish_pct: number;
   total_upvotes: number;
   top_tickers: string[];
+  trend_history?: number[];
 }
 
 export interface TrendingSector extends TrendingGroupBase {
@@ -438,6 +448,10 @@ export interface NewsTrendingStock {
 
 export interface NewsSourceCount {
   source: string;
+  mentions?: number;
+  sentiment_score?: number | null;
+  buzz_score?: number | null;
+  /** @deprecated Use `mentions` instead. */
   count: number;
 }
 
@@ -497,6 +511,7 @@ interface NewsTrendingGroupBase {
   bullish_pct: number;
   bearish_pct: number;
   top_tickers: string[];
+  trend_history?: number[];
 }
 
 export interface NewsTrendingSector extends NewsTrendingGroupBase {
@@ -678,6 +693,7 @@ interface XTrendingGroupBase {
   bearish_pct?: number | null;
   total_upvotes?: number | null;
   top_tickers: string[];
+  trend_history?: number[];
 }
 
 export interface XTrendingSector extends XTrendingGroupBase {
@@ -779,6 +795,7 @@ export interface PolymarketTopMention {
   market_type: string;
   trade_count?: number | null;
   sentiment_score?: number | null;
+  buzz_score?: number | null;
   yes_price?: number | null;
   no_price?: number | null;
   liquidity: number;
@@ -824,6 +841,7 @@ interface PolymarketTrendingGroupBase {
   bearish_pct: number;
   total_liquidity: number;
   top_tickers: string[];
+  trend_history?: number[];
 }
 
 export interface PolymarketTrendingSector extends PolymarketTrendingGroupBase {
@@ -957,11 +975,18 @@ export interface SentimentPhraseMatch {
 
 export interface SentimentComponents {
   engine_version: string;
+  model_score?: number | null;
+  /** @deprecated Engine 5.5 returns null. */
   vader_compound?: number | null;
+  /** @deprecated Engine 5.5 returns null. Use `model_score` instead. */
   roberta_score?: number | null;
+  /** @deprecated Engine 5.5 returns zero. */
   emoji_score: number;
+  /** @deprecated Engine 5.5 returns zero. */
   phrase_adjustment: number;
+  /** @deprecated Engine 5.5 returns an empty array. */
   phrase_matches: SentimentPhraseMatch[];
+  /** @deprecated Engine 5.5 returns an empty array. */
   contextual_finance_matches: string[];
 }
 
@@ -991,6 +1016,10 @@ export interface CryptoTrendingToken {
 
 export interface CryptoSubredditCount {
   subreddit: string;
+  mentions?: number;
+  sentiment_score?: number | null;
+  buzz_score?: number | null;
+  /** @deprecated Use `mentions` instead. */
   count: number;
 }
 
@@ -1705,8 +1734,8 @@ export class SentimentNamespace {
   }
 
   /** Analyze one finance or trading text with the direct Finance Sentiment API. */
-  async analyze(text: string): Promise<SentimentAnalyzeResponse> {
-    return this.http.post('/sentiment/v1/analyze', { text });
+  async analyze(text: string, options: SentimentAnalyzeOptions = {}): Promise<SentimentAnalyzeResponse> {
+    return this.http.post('/sentiment/v1/analyze', { text, target: options.target });
   }
 }
 
@@ -1726,11 +1755,11 @@ export class AdanosClient {
    * Create a new Adanos Market Sentiment API client.
    *
    * @param options.apiKey - Your API key (`adanos_api_key_here`).
-   * @param options.baseUrl - API base URL. Default: `https://api.adanos.org`.
+   * @param options.baseUrl - API base URL. Default: `https://api.adanos.com`.
    * @param options.timeout - Request timeout in ms. Default: 30000.
    */
   constructor(options: ClientOptions) {
-    const baseUrl = options.baseUrl ?? 'https://api.adanos.org';
+    const baseUrl = options.baseUrl ?? 'https://api.adanos.com';
     const timeout = options.timeout ?? 30_000;
     const http = new HttpClient(baseUrl, options.apiKey, timeout);
     this.http = http;

@@ -2,7 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/finance-sentiment.svg)](https://www.npmjs.com/package/finance-sentiment)
 
-`finance-sentiment` is the public TypeScript SDK for the [Adanos Market Sentiment API](https://api.adanos.org/docs).
+`finance-sentiment` is the public TypeScript SDK for the [Adanos Market Sentiment API](https://api.adanos.com/docs).
 
 It gives you typed access to:
 - Reddit stock sentiment
@@ -15,8 +15,8 @@ It gives you typed access to:
 Links:
 - Source: https://github.com/adanos-software/adanos-ts-sdk
 - npm: https://www.npmjs.com/package/finance-sentiment
-- API docs: https://api.adanos.org/docs
-- Homepage: https://adanos.org
+- API docs: https://api.adanos.com/docs
+- Homepage: https://adanos.com
 
 Package and import:
 - npm package: `finance-sentiment`
@@ -263,7 +263,19 @@ Period options: use `from` and `to` as `YYYY-MM-DD` inclusive UTC dates for repr
 
 | Method | Description |
 |--------|-------------|
-| `analyze(text)` | Analyze one finance or trading text. Requires a Professional account. |
+| `analyze(text, { target })` | Analyze financial text, optionally for a company name or ticker. Requires a Professional account. |
+
+`target` is optional and nullable, with a maximum length of 100 characters. The company should appear in the text. A company name works best.
+
+```typescript
+const result = await client.sentiment.analyze(
+  "Goldman Sachs cuts Apple price target",
+  { target: "Apple" },
+);
+console.log(result.components.model_score);
+```
+
+`components.model_score` is optional and nullable. It contains the raw model score. `sentiment_score` uses the shared sentiment scale. The legacy component fields remain available and are deprecated.
 
 ## Error Handling
 
@@ -285,17 +297,23 @@ try {
 
 ## Authentication and Configuration
 
-Get your API key at [adanos.org](https://adanos.org).
+Get your API key at [adanos.com](https://adanos.com).
 
 ```typescript
 import { AdanosClient } from "finance-sentiment";
 
 const client = new AdanosClient({
   apiKey: "adanos_api_key_here",
-  baseUrl: "https://api.adanos.org",
+  baseUrl: "https://api.adanos.com",
   timeout: 60_000,
 });
 ```
+
+The default host is `https://api.adanos.com` for API `1.54.0`. You can keep an explicit `https://api.adanos.org` base URL or a custom gateway URL. Endpoint paths and authentication stay the same.
+
+News stock methods accept a single company ticker, including an exchange suffix such as `ABX.DE`. A valid unknown ticker returns HTTP 404. Compare preserves zero-mention company rows. Metadata such as exchange or sector can be empty. Raw `created_utc` timestamps are UTC strings ending in `Z`. Reddit Crypto upvote totals can be negative.
+
+Contributor metrics expose `mentions`, nullable `sentiment_score`, and nullable `buzz_score`. The `count` alias remains available and is deprecated. Sector and country results expose daily `trend_history`. Polymarket top mentions expose nullable `buzz_score`.
 
 ## Rate Limits
 

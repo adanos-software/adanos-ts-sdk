@@ -5,6 +5,16 @@ All notable changes to the Adanos TypeScript SDK will be documented in this file
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+## [Unreleased]
+
+### Added
+- Added optional company `target` options to direct sentiment analysis and optional nullable `components.model_score`.
+- Added contributor `mentions`, sentiment and buzz metrics, group `trend_history`, and Polymarket top-mention `buzz_score` to response types.
+
+### Changed
+- Updated defaults and website links for API `1.54.0` to `api.adanos.com` and `adanos.com`. Explicit `.org` and custom base URLs remain supported.
+- Deprecated legacy sentiment components and contributor `count` aliases without removing them.
+
 ## [2.7.0] - 2026-08-09
 
 ### Added

@@ -20,6 +20,7 @@ const TRENDING_STOCK = {
 
 const STOCK_SENTIMENT = {
   ticker: 'TSLA', found: true, mentions: 342,
+  top_subreddits: [{ subreddit: 'stocks', mentions: 8, count: 8, sentiment_score: null, buzz_score: 12 }],
   daily_trend: [{
     date: '2026-03-05', mentions: 52, sentiment_score: 0.31, buzz_score: 42.8,
     bullish_pct: 62, bearish_pct: 18,
@@ -152,7 +153,7 @@ const NEWS_STOCK_SENTIMENT = {
   mentions: 309,
   source_count: 25,
   daily_trend: [{ date: '2026-03-05', mentions: 41, sentiment_score: 0.58, buzz_score: 62.4 }],
-  top_sources: [{ source: 'reuters', count: 22 }],
+  top_sources: [{ source: 'reuters', mentions: 22, count: 22, sentiment_score: 0.21, buzz_score: null }],
   top_mentions: [{
     text_snippet: 'NVIDIA beats earnings estimates.',
     sentiment_score: 0.72,
@@ -262,6 +263,7 @@ const POLYMARKET_STOCK_DETAIL = {
     condition_id: '0xabc',
     question: 'Will AAPL close above $220 this week?',
     market_type: 'close_above',
+    buzz_score: 77.2,
     liquidity: 7905.52,
     volume_24h: 2408.43,
     active: true,
@@ -479,6 +481,12 @@ describe('Auth', () => {
     mockFetch(200, []);
     const c = new AdanosClient({ apiKey: API_KEY });
     await c.reddit.trending();
+    expect(requestUrl().origin).toBe('https://api.adanos.com');
+  });
+
+  it('preserves an explicit .org base URL', async () => {
+    mockFetch(200, []);
+    await client().reddit.trending();
     expect(requestUrl().origin).toBe('https://api.adanos.org');
   });
 
@@ -543,6 +551,9 @@ describe('Reddit stock', () => {
     expect(result.mentions).toBe(342);
     expect('total_mentions' in result).toBe(false);
     expect(result.daily_trend?.[0].sentiment_score).toBe(0.31);
+    expect(result.top_subreddits?.[0].mentions).toBe(8);
+    expect(result.top_subreddits?.[0].sentiment_score).toBeNull();
+    expect(result.top_subreddits?.[0].buzz_score).toBe(12);
     expect('sentiment' in (result.daily_trend?.[0] ?? {})).toBe(false);
     expect(requestUrl().pathname).toBe('/reddit/stocks/v1/stock/TSLA');
   });
@@ -726,10 +737,22 @@ describe('News stock', () => {
     expect(result.daily_trend?.[0].sentiment_score).toBe(0.58);
     expect('sentiment' in (result.daily_trend?.[0] ?? {})).toBe(false);
     expect(result.top_sources?.[0].source).toBe('reuters');
+    expect(result.top_sources?.[0].mentions).toBe(22);
+    expect(result.top_sources?.[0].sentiment_score).toBe(0.21);
+    expect(result.top_sources?.[0].buzz_score).toBeNull();
     expect(result.top_mentions?.[0].source).toBe('reuters');
     expect(requestUrl().pathname).toBe('/news/stocks/v1/stock/NVDA');
     expect(requestParams().days).toBe('7');
     expect(requestParams().source).toBeUndefined();
+  });
+});
+
+describe('News exchange ticker', () => {
+  it('preserves exchange-qualified company tickers', async () => {
+    mockFetch(200, { ticker: 'ABX.DE', found: true });
+    const result = await client().news.stock('ABX.DE');
+    expect(requestUrl().pathname).toBe('/news/stocks/v1/stock/ABX.DE');
+    expect(result.ticker).toBe('ABX.DE');
   });
 });
 
@@ -1067,6 +1090,7 @@ describe('Polymarket stock', () => {
     expect(result.daily_trend?.[0].sentiment_score).toBe(0.22);
     expect(result.daily_trend?.[0].bullish_pct).toBe(64);
     expect(result.top_mentions?.[0].market_status).toBe('tradable');
+    expect(result.top_mentions?.[0].buzz_score).toBe(77.2);
     expect(result.pulse?.mood).toBe('mixed');
     expect(requestUrl().pathname).toBe('/polymarket/stocks/v1/stock/AAPL');
   });
@@ -1185,6 +1209,35 @@ describe('Direct sentiment', () => {
     expect(result.components.phrase_matches[0].phrase).toBe('short squeeze');
   });
 
+  it.each(['Apple', null])('posts an explicit target %s', async (target) => {
+    mockFetch(200, SENTIMENT_ANALYZE_RESPONSE);
+    await client().sentiment.analyze('Goldman Sachs cuts Apple price target', { target });
+    expect(lastRequest?.init.body).toBe(JSON.stringify({
+      text: 'Goldman Sachs cuts Apple price target', target,
+    }));
+  });
+
+  it.each([0.8, null, undefined])('preserves optional model score %s', async (modelScore) => {
+    mockFetch(200, {
+      ...SENTIMENT_ANALYZE_RESPONSE,
+      components: {
+        engine_version: '5.5',
+        ...(modelScore === undefined ? {} : { model_score: modelScore }),
+        vader_compound: null,
+        roberta_score: null,
+        emoji_score: 0,
+        phrase_adjustment: 0,
+        phrase_matches: [],
+        contextual_finance_matches: [],
+      },
+    });
+    const result = await client().sentiment.analyze('Apple beats estimates');
+    expect(result.components.model_score).toBe(modelScore);
+    expect(result.components.vader_compound).toBeNull();
+    expect(result.components.phrase_matches).toEqual([]);
+    expect(Object.hasOwn(result.components, 'model_score')).toBe(modelScore !== undefined);
+  });
+
   it('preserves custom baseUrl path prefixes', async () => {
     mockFetch(200, SENTIMENT_ANALYZE_RESPONSE);
     const proxiedClient = new AdanosClient({
@@ -1204,6 +1257,8 @@ describe('Reddit crypto', () => {
       symbol: 'BTC',
       found: true,
       mentions: 321,
+      total_upvotes: -4,
+      top_subreddits: [{ subreddit: 'cryptocurrency', mentions: 8, count: 8, sentiment_score: null, buzz_score: 12 }],
       top_mentions: [{
         text_snippet: 'BTC range',
         sentiment_score: null,
@@ -1217,6 +1272,11 @@ describe('Reddit crypto', () => {
     expect(requestUrl().pathname).toBe('/reddit/crypto/v1/token/BTC');
     expect(requestParams().days).toBe('7');
     expect(result.symbol).toBe('BTC');
+    expect(result.total_upvotes).toBe(-4);
+    expect(result.top_subreddits?.[0].mentions).toBe(8);
+    expect(result.top_subreddits?.[0].sentiment_score).toBeNull();
+    expect(result.top_subreddits?.[0].buzz_score).toBe(12);
+    expect(result.top_mentions?.[0].created_utc).toBe('2026-03-20T18:42:10Z');
     expect(result.top_mentions?.[0].subreddit).toBeNull();
   });
 
@@ -1449,5 +1509,17 @@ describe('Edge cases', () => {
     mockFetch(200, COMPARE_RESPONSE);
     await client().reddit.compare(['TSLA']);
     expect(requestParams().tickers).toBe('TSLA');
+  });
+});
+
+describe('Grouped trend history', () => {
+  const platforms: Array<'reddit' | 'news' | 'x' | 'polymarket'> = ['reddit', 'news', 'x', 'polymarket'];
+  it.each(platforms)('preserves %s sector and country UTC-day history', async (platform) => {
+    mockFetch(200, [{ sector: 'Technology', trend_history: [1, 2, 3] }]);
+    const sectors = await client()[platform].trendingSectors();
+    expect(sectors[0].trend_history).toEqual([1, 2, 3]);
+    mockFetch(200, [{ country: 'Germany', trend_history: [4, 5, 6] }]);
+    const countries = await client()[platform].trendingCountries();
+    expect(countries[0].trend_history).toEqual([4, 5, 6]);
   });
 });
