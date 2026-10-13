@@ -7,6 +7,8 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [2.8.0] - 2026-10-13
+
 ### Added
 - Added optional company `target` options to direct sentiment analysis and optional nullable `components.model_score`.
 - Added contributor `mentions`, sentiment and buzz metrics, group `trend_history`, and Polymarket top-mention `buzz_score` to response types.
