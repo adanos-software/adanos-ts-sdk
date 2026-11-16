@@ -163,6 +163,8 @@ const stats = await client.crypto.stats();
 const health = await client.crypto.health();
 ```
 
+Polymarket uses Instrument Graph keys in API `1.55.0`: stocks, ADRs, and share classes of one company share a key; ETFs keep their own keys. Use `BRK`, `BNY`, or `EWG`, and keep venue suffixes returned by Search, such as `SAP.DE`. Find replacement keys with Search. For example, `BK` is now `BNY` and `DAX` is `EWG`. Stock detail and raw mentions return `404` for unknown keys and `503` when identity lookup is unavailable. Share classes such as `BRK.B` or `BRK-B`, cashtags, and unknown suffixes return `422`. Compare keeps unknown keys as zero-activity rows without a company name and does not rewrite aliases. A `null` compare `buzz_score` means unavailable data, not zero; `trend_history` can be absent. Raw `strike_price` is `null` for company-value or reported-figure thresholds, such as market capitalization or capex.
+
 Polymarket semantics:
 - `buzz_score` is activity-first and optimized for current market attention
 - `total_liquidity` is a windowed signal over the selected period
@@ -309,7 +311,7 @@ const client = new AdanosClient({
 });
 ```
 
-The default host is `https://api.adanos.com` for API `1.54.0`. You can keep an explicit `https://api.adanos.org` base URL or a custom gateway URL. Endpoint paths and authentication stay the same.
+The default host is `https://api.adanos.com` for API `1.55.0`. You can keep an explicit `https://api.adanos.org` base URL or a custom gateway URL. Endpoint paths and authentication stay the same.
 
 News stock methods accept a single company ticker, including an exchange suffix such as `ABX.DE`. A valid unknown ticker returns HTTP 404. Compare preserves zero-mention company rows. Metadata such as exchange or sector can be empty. Raw `created_utc` timestamps are UTC strings ending in `Z`. Reddit Crypto upvote totals can be negative.
 

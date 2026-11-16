@@ -1147,7 +1147,7 @@ describe('Polymarket compare', () => {
     expect(result.stocks[0].trade_count).toBe(8);
     expect(result.stocks[0].market_count).toBe(4);
     expect(result.stocks[0].current_market_count).toBe(2);
-    expect(result.stocks[0].trend_history.at(-1)).toBe(71.4);
+    expect(result.stocks[0].trend_history?.at(-1)).toBe(71.4);
     expect('sentiment' in result.stocks[0]).toBe(false);
   });
 });

@@ -855,7 +855,7 @@ export interface PolymarketTrendingCountry extends PolymarketTrendingGroupBase {
 export interface PolymarketCompareStockItem {
   ticker: string;
   company_name?: string | null;
-  buzz_score: number;
+  buzz_score: number | null;
   trend?: 'rising' | 'falling' | 'stable' | null;
   trade_count: number;
   market_count: number;
@@ -865,7 +865,7 @@ export interface PolymarketCompareStockItem {
   bullish_pct?: number | null;
   bearish_pct?: number | null;
   total_liquidity: number;
-  trend_history: number[];
+  trend_history?: number[];
 }
 
 export interface PolymarketCompareResponse {
@@ -1609,14 +1609,14 @@ export class PolymarketNamespace extends PlatformNamespace {
     });
   }
 
-  /** Get Polymarket sentiment for a specific stock ticker. */
+  /** Get Polymarket sentiment for a Graph company or ETF key, such as BRK, EWG, or SAP.DE. */
   async stock(ticker: string, options: StockOptions = {}): Promise<PolymarketStockDetail> {
     return this.request(`/stock/${encodeURIComponent(ticker)}`, {
       ...periodParams(options),
     });
   }
 
-  /** Get raw Polymarket snapshots for a specific stock ticker. */
+  /** Get raw Polymarket snapshots for a Graph company or ETF key. */
   async mentions(ticker: string, options: RawMentionsOptions = {}): Promise<PolymarketRawMentionsResponse> {
     return this.request(`/stock/${encodeURIComponent(ticker)}/mentions`, {
       ...periodParams(options),
@@ -1633,7 +1633,7 @@ export class PolymarketNamespace extends PlatformNamespace {
     });
   }
 
-  /** Compare multiple stocks side-by-side on Polymarket. */
+  /** Compare Polymarket Graph keys without rewriting listing aliases or share classes. */
   async compare(tickers: string[], options: CompareOptions = {}): Promise<PolymarketCompareResponse> {
     return this.request('/compare', {
       tickers: tickers.join(','),
