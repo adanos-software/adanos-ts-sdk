@@ -7,6 +7,8 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [2.8.1] - 2026-11-16
+
 ### Changed
 - Align Polymarket documentation and typed compare responses with API `1.55.0`, including Graph company/ETF keys, required nullable `buzz_score`, and optional `trend_history`.
 - Add HTTP and exported-type regressions for Graph keys, errors, and nullable metrics.
